@@ -2075,7 +2075,7 @@ Would you like to download a PDF report of these results?`;
     function getSegmentKey(segment, analysisType) {
       if (analysisType === 'risk_based') return segment.risk_cohort;
       if (analysisType === 'geographic') return segment.cohort_key || segment.state || segment.region_name;
-      if (analysisType === 'policy_vintage') return segment.vintage_cohort;
+      if (analysisType === 'policy_vintage') return segment.vintage_cohort || segment.cohort_key;
       if (analysisType === 'claim_behavior') return segment.claim_cohort;
       return 'unknown';
     }
@@ -2093,13 +2093,16 @@ Would you like to download a PDF report of these results?`;
       } else if (analysisType === 'geographic') {
         return segment.region_name || segment.state || 'Unknown Region';
       } else if (analysisType === 'policy_vintage') {
+        // Prefer explicit label field if present from server fallback
+        if (segment.label) return segment.label;
         const labels = {
           'new_customers': 'New (0-6 months)',
           'established': 'Established (6-24 months)',
           'mature': 'Mature (2-5 years)',
           'legacy': 'Legacy (5+ years)'
         };
-        return labels[segment.vintage_cohort] || segment.vintage_cohort;
+        const key = segment.vintage_cohort || segment.cohort_key;
+        return labels[key] || key;
       } else if (analysisType === 'claim_behavior') {
         const labels = {
           'claim_free': 'Claim-Free',
