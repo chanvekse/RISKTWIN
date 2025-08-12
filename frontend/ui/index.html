@@ -2104,12 +2104,15 @@ Would you like to download a PDF report of these results?`;
         const key = segment.vintage_cohort || segment.cohort_key;
         return labels[key] || key;
       } else if (analysisType === 'claim_behavior') {
+        // Use label from backend if provided; otherwise map claim_cohort to friendly name
+        if (segment.label) return segment.label;
         const labels = {
           'claim_free': 'Claim-Free',
           'single_claim': 'Single Claim',
           'multiple_claims': 'Multiple Claims'
         };
-        return labels[segment.claim_cohort] || segment.claim_cohort;
+        const key = segment.claim_cohort || segment.cohort_key;
+        return labels[key] || key;
       }
       const fallback = segment.region_name || segment.state || segment.cohort_key || segment.risk_cohort || segment.claim_cohort || segment.vintage_cohort || segment.segment;
       return fallback || 'Unknown Segment';
