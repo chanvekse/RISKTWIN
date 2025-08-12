@@ -1742,16 +1742,22 @@ Would you like to download a PDF report of these results?`;
       const analysisType = window.cohortAnalysisType || 'risk_based';
 
       // Normalize data to a common shape for breakdowns
-      const normalize = (item) => ({
-        label: (getSegmentLabel(item, analysisType) || item.cohort_key || item.region_name || item.state || item.risk_cohort || item.segment || item.claim_cohort || item.vintage_cohort || 'segment'),
-        total_customers: parseInt(item.total_customers ?? item.customer_count ?? 0),
-        total_exposure: parseFloat(item.total_exposure ?? 0),
-        avg_risk_score: parseFloat(item.avg_risk_score ?? 0),
-        scenarios_applied: parseInt(item.scenarios_applied ?? 0),
-        scenario_adoption_rate: (typeof item.scenario_adoption_rate === 'string'
-          ? parseFloat(item.scenario_adoption_rate) / 100
-          : parseFloat(item.scenario_adoption_rate ?? 0))
-      });
+      const normalize = (item) => {
+        const labelFromHelper = getSegmentLabel(item, analysisType);
+        const safeLabel = (labelFromHelper && !/^Unknown/i.test(labelFromHelper))
+          ? labelFromHelper
+          : (item.region_name || item.state || item.cohort_key || item.risk_cohort || item.segment || item.claim_cohort || item.vintage_cohort || 'segment');
+        return {
+          label: safeLabel,
+          total_customers: parseInt(item.total_customers ?? item.customer_count ?? 0),
+          total_exposure: parseFloat(item.total_exposure ?? 0),
+          avg_risk_score: parseFloat(item.avg_risk_score ?? 0),
+          scenarios_applied: parseInt(item.scenarios_applied ?? 0),
+          scenario_adoption_rate: (typeof item.scenario_adoption_rate === 'string'
+            ? parseFloat(item.scenario_adoption_rate) / 100
+            : parseFloat(item.scenario_adoption_rate ?? 0))
+        };
+      };
 
       let data = Array.isArray(performanceData) && performanceData.length > 0 && (
         'total_customers' in performanceData[0] || 'avg_risk_score' in performanceData[0] || 'scenarios_applied' in performanceData[0]
