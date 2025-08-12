@@ -980,6 +980,15 @@ app.get('/api/cohort/:analysisType', async (req, res) => {
           { cohort_key: 'northeast',    region_name: 'Northeast',    customer_count: 22, avg_risk_score: 74.2,  total_exposure: 265000, avg_claim_prob: 0.19, scenarios_applied: 7 }
         ];
         return res.json({ analysisType, timeFrame, segments, performance_metrics: [], migration_analysis: {}, trends: {}, generated_at: new Date().toISOString() });
+      } else if (analysisType === 'policy_vintage') {
+        const segments = [
+          { cohort_key: 'new_customers',  label: 'New (<1yr)', customer_count: 22, avg_risk_score: 65.8, total_exposure: 185000, avg_claim_prob: 0.11, scenarios_applied: 4 },
+          { cohort_key: 'established',   label: 'Established (1-3yr)', customer_count: 35, avg_risk_score: 69.4, total_exposure: 310000, avg_claim_prob: 0.14, scenarios_applied: 10 },
+          { cohort_key: 'mature',        label: 'Mature (3-7yr)', customer_count: 27, avg_risk_score: 71.2, total_exposure: 275000, avg_claim_prob: 0.16, scenarios_applied: 8 },
+          { cohort_key: 'legacy',        label: 'Legacy (7yr+)', customer_count: 15, avg_risk_score: 74.9, total_exposure: 190000, avg_claim_prob: 0.19, scenarios_applied: 6 }
+        ];
+
+        return res.json({ analysisType, timeFrame, segments, performance_metrics: [], migration_analysis: {}, trends: {}, generated_at: new Date().toISOString() });
       }
       
       // Get the full cohort analysis data which includes segments
