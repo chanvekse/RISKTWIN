@@ -1,0 +1,16 @@
+{
+  "servers": [
+    {
+      "name": "RiskTwinDB",
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-postgres",
+        "--connection",
+        "postgresql://neondb_owner:npg_aRB0bz3YGglm@ep-wandering-brook-aes1z00x.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+      ]
+    }
+  ]
+}
+
+
+

@@ -1,0 +1,2557 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Risk Twin – Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { --bg:#0b1020; --card:#121a33; --text:#e7ecff; --muted:#9fb1ff; --accent:#6aa3ff; --good:#19c37d; --bad:#ff6b6b; }
+    *{ box-sizing:border-box; font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial }
+    body{ margin:0; background:linear-gradient(180deg,#0a0f1f,#0b1020); color:var(--text) }
+    header{ padding:20px 24px; border-bottom:1px solid #1f2a4d; display:flex; gap:12px; align-items:center }
+    header h1{ font-size:20px; margin:0 }
+    .wrap{ display:grid; grid-template-columns: 380px 1fr; gap:16px; padding:16px }
+    .card{ background:var(--card); border:1px solid #1f2a4d; border-radius:14px; padding:14px; box-shadow:0 6px 24px rgba(0,0,0,.25) }
+    .title{ font-weight:700; color:var(--muted); margin:0 0 10px }
+    table{ width:100%; border-collapse:collapse; }
+    th, td{ padding:10px 8px; border-bottom:1px solid #22305f; text-align:left; font-size:14px }
+    th{ color:#b9c6ff; }
+    tr:hover{ background:#0e1630; cursor:pointer }
+    .pill{ display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; border:1px solid #2a3a72; color:#b9c6ff }
+    .row{ display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:12px }
+    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:14px }
+    .label{ color:#b9c6ff; font-size:12px; margin-bottom:4px }
+    input, select, button, textarea{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid #2a3a72; background:#0e1630; color:var(--text) }
+    button{ background:linear-gradient(180deg,#3b5bd6,#2f4bb6); border:none; font-weight:600 }
+    button:disabled{ opacity:.5 }
+    .kpi{ display:flex; flex-direction:column; padding:10px 12px; background:#0e1630; border:1px solid #2a3a72; border-radius:12px }
+    .kpi b{ font-size:18px }
+    .timeline{ display:flex; flex-direction:column; gap:8px; margin-top:8px }
+    .titem{ display:grid; grid-template-columns: 16px 1fr; gap:10px; align-items:start }
+    .dot{ width:10px; height:10px; border-radius:50%; margin-top:6px; background:var(--accent) }
+    .scenario-dot{ background:#ffaa00; box-shadow:0 0 8px rgba(255,170,0,0.4) }
+    .scenario-timestamp{ background:linear-gradient(135deg,#3b5bd6,#2f4bb6); color:white; padding:4px 8px; border-radius:6px; font-weight:600; font-size:12px }
+    .amount-highlight{ background:#ffeb3b; color:#333; padding:1px 4px; border-radius:3px; font-weight:600; font-size:11px }
+    .action-restored{ background:#4caf50; color:white; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600; margin-left:8px }
+    .action-increased{ background:#ff9800; color:white; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600; margin-left:8px }
+    .final-deductible{ background:#2196f3; color:white; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600; margin-left:8px }
+    .deductible-progression{ display:inline-block; background:#1a1a1a; padding:4px 8px; border-radius:6px; margin-left:8px; border:1px solid #333 }
+    .before-amount{ color:#ffab00; font-size:10px; font-weight:600 }
+    .change-amount{ color:#4caf50; font-size:10px; font-weight:600 }
+    .decrease-amount{ color:#f44336; font-size:10px; font-weight:600 }
+    
+    /* ML Analysis Styles */
+    .ml-controls button { 
+      padding: 8px 16px; 
+      border: none; 
+      border-radius: 6px; 
+      color: white; 
+      font-weight: 600; 
+      cursor: pointer; 
+      transition: all 0.3s ease; 
+    }
+    .ml-controls button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .ml-controls button:disabled { opacity: 0.6; cursor: not-allowed; }
+    
+    .factor-value { 
+      font-weight: 600; 
+      padding: 2px 6px; 
+      border-radius: 4px; 
+      background: rgba(255,255,255,0.1); 
+    }
+    
+    /* Portfolio Analytics Styles */
+    .metric-card {
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .metric-label {
+      font-size: 12px;
+      color: #8892b0;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .metric-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #48dbfb;
+    }
+    
+    .risk-tier-card {
+      background: rgba(255,255,255,0.1);
+      border-radius: 6px;
+      padding: 12px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.2);
+      position: relative;
+    }
+    .risk-tier-label {
+      font-size: 11px;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    .risk-tier-count {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .risk-tier-percentage {
+      font-size: 10px;
+      opacity: 0.8;
+    }
+    
+    .alert-item {
+      background: rgba(255,255,255,0.05);
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 8px;
+      border-left: 4px solid;
+    }
+    .alert-critical { border-left-color: #8B0000; }
+    .alert-high { border-left-color: #F44336; }
+    .alert-medium { border-left-color: #FF9800; }
+    .alert-low { border-left-color: #4CAF50; }
+    
+    .alert-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+      font-size: 13px;
+    }
+    .alert-description {
+      font-size: 11px;
+      color: #8892b0;
+      margin-bottom: 4px;
+    }
+    .alert-recommendation {
+      font-size: 10px;
+      font-style: italic;
+      color: #feca57;
+    }
+    
+    /* Heat Map Styles */
+    .heat-map-state-card {
+      background: rgba(255,255,255,0.05);
+      border-radius: 6px;
+      padding: 8px;
+      text-align: center;
+      border: 2px solid;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 10px;
+    }
+    .heat-map-state-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .heat-map-state-name {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .heat-map-state-risk {
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .heat-map-state-customers {
+      font-size: 9px;
+      opacity: 0.8;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+    }
+    
+    .metric-highlight {
+      font-weight: 700;
+      color: #48dbfb;
+    }
+    
+    /* Cohort Analysis Styles - Enhanced Visibility */
+    .cohort-segment-card {
+      background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(72,219,251,0.2));
+      border-radius: 12px;
+      padding: 20px;
+      border: 2px solid rgba(255,255,255,0.4);
+      transition: all 0.3s ease;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      min-height: 140px;
+      color: #ffffff !important;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    }
+    .cohort-segment-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(72,219,251,0.4);
+      background: linear-gradient(135deg, rgba(255,255,255,0.35), rgba(72,219,251,0.3));
+      border-color: #48dbfb;
+    }
+    .cohort-segment-title {
+      font-weight: 800;
+      margin-bottom: 10px;
+      font-size: 16px;
+      color: #00ff88 !important;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+    }
+    .cohort-segment-metric {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+      font-size: 12px;
+      color: #ffffff !important;
+      font-weight: 600;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    }
+    .cohort-segment-value {
+      font-weight: 700;
+      color: #48dbfb !important;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+    }
+    
+    .performance-metric-card {
+      background: rgba(255,255,255,0.03);
+      border-radius: 6px;
+      padding: 8px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .interactive-metric {
+      cursor: pointer;
+      position: relative;
+    }
+    
+    .interactive-metric:hover {
+      background: rgba(255,255,255,0.15);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border-color: rgba(72,219,251,0.6);
+    }
+    
+    .performance-metric-hint {
+      font-size: 8px;
+      opacity: 0.6;
+      margin-top: 2px;
+      color: #48dbfb;
+    }
+    .performance-metric-label {
+      font-size: 9px;
+      opacity: 0.8;
+      margin-bottom: 2px;
+    }
+    .performance-metric-value {
+      font-size: 11px;
+      font-weight: 600;
+      color: #48dbfb;
+    }
+    
+    .migration-item {
+      background: rgba(255,255,255,0.02);
+      border-radius: 4px;
+      padding: 6px;
+      margin-bottom: 4px;
+      border-left: 3px solid #48dbfb;
+      font-size: 10px;
+    }
+    .final-amount{ color:#2196f3; font-size:10px; font-weight:600 }
+    .restored-amount{ color:#4caf50; font-size:10px; font-weight:600 }
+    .no-change-amount{ color:#999; font-size:10px; font-weight:600 }
+    .state-info{ color:#999; font-size:9px; font-style:italic }
+    .arrow{ color:#666; margin:0 4px; font-size:10px }
+    .tcap{ font-size:13px; color:#c8d3ff }
+    .time-ago{ font-size:11px; color:#8892b0; font-style:italic; margin-right:8px }
+    .ok{ color:var(--good) } .warn{ color:var(--bad) }
+    footer{ padding:12px 16px; color:#9fb1ff; font-size:12px; opacity:.8 }
+    @media (max-width: 980px){ .wrap{ grid-template-columns: 1fr } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🛡️ Risk Twin</h1>
+    <span class="pill">Demo</span>
+  </header>
+
+  <div class="wrap">
+    <!-- Left: Leaderboard -->
+    <section class="card">
+      <h2 class="title">High-Risk Leaderboard</h2>
+      <div class="row" style="margin-bottom:10px">
+        <div>
+          <div class="label">Threshold</div>
+          <input id="thr" type="number" value="50" min="0" max="100"/>
+        </div>
+        <div>
+          <div class="label">Limit</div>
+          <input id="lim" type="number" value="5" min="1" max="50"/>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button id="loadBtn">Load</button>
+        <button id="portfolioBtn" style="background: linear-gradient(135deg, #667eea, #764ba2);">📊 Portfolio Analytics</button>
+      </div>
+      <div style="height:10px"></div>
+      <table id="tbl">
+        <thead>
+          <tr><th>ID</th><th>Name</th><th>State</th><th>Risk</th><th>12-mo Prob</th><th>Exp Loss</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Portfolio Analytics Section (Hidden by default) -->
+    <section id="portfolio-section" class="card" style="display:none; grid-column: 1 / -1;">
+      <h2 class="title">📊 Portfolio Risk Analytics</h2>
+      
+      <!-- Portfolio Overview -->
+      <div class="portfolio-overview" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:20px;">
+        <div class="metric-card">
+          <div class="metric-label">Total Customers</div>
+          <div class="metric-value" id="portfolio-total-customers">-</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Average Risk Score</div>
+          <div class="metric-value" id="portfolio-avg-risk">-</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Total Exposure</div>
+          <div class="metric-value" id="portfolio-total-exposure">-</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Risk Spread</div>
+          <div class="metric-value" id="portfolio-risk-spread">-</div>
+        </div>
+      </div>
+
+      <!-- Risk Tier Distribution -->
+      <div style="margin-bottom:20px;">
+        <h3 class="title" style="font-size:1.1rem; margin-bottom:10px;">Risk Tier Distribution</h3>
+        <div id="risk-tiers-display" class="risk-tiers-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px;">
+          <!-- Risk tier cards will be populated here -->
+        </div>
+      </div>
+
+      <!-- Geographic Distribution -->
+      <div style="margin-bottom:20px;">
+        <h3 class="title" style="font-size:1.1rem; margin-bottom:10px;">Geographic Risk Distribution</h3>
+        <div id="geographic-distribution" style="max-height:200px; overflow-y:auto;">
+          <table style="width:100%; font-size:12px;">
+            <thead>
+              <tr style="background:rgba(255,255,255,0.1);">
+                <th style="padding:8px; text-align:left;">State</th>
+                <th style="padding:8px;">Customers</th>
+                <th style="padding:8px;">Avg Risk</th>
+                <th style="padding:8px;">Exposure</th>
+                <th style="padding:8px;">Level</th>
+              </tr>
+            </thead>
+            <tbody id="geographic-table-body">
+              <!-- Geographic data will be populated here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Portfolio Alerts -->
+      <div style="margin-bottom:20px;">
+        <h3 class="title" style="font-size:1.1rem; margin-bottom:10px;">🚨 Portfolio Alerts</h3>
+        <div id="portfolio-alerts" style="max-height:150px; overflow-y:auto;">
+          <!-- Alerts will be populated here -->
+        </div>
+      </div>
+
+      <!-- Interactive Risk Heat Map -->
+      <div style="margin-bottom:20px;">
+        <h3 class="title" style="font-size:1.1rem; margin-bottom:10px;">🗺️ Interactive Risk Heat Map</h3>
+        <div style="display:flex; gap:10px; margin-bottom:12px;">
+          <button id="loadHeatMapBtn" style="background: linear-gradient(135deg, #667eea, #764ba2);">🔥 Load Heat Map</button>
+          <button id="heatMapActivityBtn" style="background: linear-gradient(135deg, #f093fb, #f5576c);">📊 Activity View</button>
+          <select id="heatMapTimeFrame" style="padding:6px;">
+            <option value="30d">Last 30 Days</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="90d">Last 90 Days</option>
+          </select>
+        </div>
+        
+        <!-- Heat Map Visualization Area -->
+        <div id="heat-map-container" style="display:none; background:rgba(255,255,255,0.05); border-radius:8px; padding:12px; border:1px solid rgba(255,255,255,0.2);">
+          <div id="heat-map-legend" style="margin-bottom:12px;">
+            <div style="font-size:11px; font-weight:600; margin-bottom:6px;">Risk Level Legend:</div>
+            <div id="legend-items" style="display:flex; gap:12px; flex-wrap:wrap; font-size:10px;">
+              <!-- Legend items will be populated dynamically -->
+            </div>
+          </div>
+          
+          <!-- Simplified Heat Map Grid -->
+          <div id="heat-map-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; max-height:300px; overflow-y:auto;">
+            <!-- Heat map state cards will be populated here -->
+          </div>
+          
+          <!-- Heat Map Stats -->
+          <div id="heat-map-stats" style="margin-top:12px; padding:10px; background:rgba(255,255,255,0.05); border-radius:6px; font-size:11px;">
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px;">
+              <div>Total States: <span id="hm-total-states" class="metric-highlight">-</span></div>
+              <div>Avg Portfolio Risk: <span id="hm-avg-risk" class="metric-highlight">-</span></div>
+              <div>Highest Risk State: <span id="hm-highest-risk" class="metric-highlight">-</span></div>
+              <div>Most Customers: <span id="hm-most-customers" class="metric-highlight">-</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cohort Analysis Dashboard -->
+      <div style="margin-bottom:20px;">
+        <h3 class="title" style="font-size:1.1rem; margin-bottom:10px;">👥 Cohort Analysis Dashboard</h3>
+        <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+          <button id="loadRiskCohortsBtn" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">📊 Risk Cohorts</button>
+          <button id="loadGeoCohortsBtn" style="background: linear-gradient(135deg, #f093fb, #f5576c); color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">🌍 Geographic</button>
+          <button id="loadVintageCohortsBtn" style="background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">📅 Policy Vintage</button>
+          <button id="loadClaimCohortsBtn" style="background: linear-gradient(135deg, #ff9800, #f57c00); color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.7); font-weight: 700;">🔧 Claim Behavior</button>
+          <select id="cohortTimeFrame" style="padding:6px;">
+            <option value="30d">Last 30 Days</option>
+            <option value="90d">Last 90 Days</option>
+            <option value="180d">Last 6 Months</option>
+          </select>
+        </div>
+        
+        <!-- Cohort Analysis Results -->
+        <div id="cohort-analysis-container" style="display:none; background:linear-gradient(135deg, rgba(0,255,136,0.25), rgba(72,219,251,0.2)); border-radius:15px; padding:25px; border:3px solid #00ff88; margin:20px 0; box-shadow:0 8px 32px rgba(0,255,136,0.5);">
+          <!-- Cohort Type Header -->
+          <div id="cohort-header" style="margin-bottom:25px; background:linear-gradient(90deg, #00ff88, #48dbfb); padding:20px; border-radius:12px; text-align:center; box-shadow:0 4px 15px rgba(0,255,136,0.4);">
+            <div style="font-size:20px; font-weight:800; margin-bottom:10px; color:#000000 !important; text-transform:uppercase; text-shadow:1px 1px 2px rgba(255,255,255,0.8);">📊 DETAILED BREAKDOWN: <span id="cohort-type-display">-</span></div>
+            <div style="font-size:14px; font-weight:600; color:#000000 !important; text-shadow:1px 1px 2px rgba(255,255,255,0.8);">👇 Scroll down to see all sections: Segments → Performance → Migration Analysis 👇</div>
+          </div>
+          
+          <!-- Cohort Segments Grid -->
+          <div style="font-size:16px; font-weight:800; margin-bottom:15px; color:#000000 !important; background:linear-gradient(90deg, #48dbfb, #00ff88); padding:15px; border-radius:8px; text-align:center; border:2px solid #48dbfb; text-shadow:1px 1px 2px rgba(255,255,255,0.8); box-shadow:0 3px 10px rgba(72,219,251,0.3);">🎯 CUSTOMER SEGMENTS</div>
+          <div id="cohort-segments-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; margin-bottom:25px;">
+            <!-- Cohort segment cards will be populated here -->
+          </div>
+          
+          <!-- Performance Metrics -->
+          <div id="cohort-performance" style="margin-bottom:25px; padding:20px; background:linear-gradient(135deg, rgba(72,219,251,0.15), rgba(0,255,136,0.1)); border-radius:12px; border:3px solid #48dbfb; box-shadow:0 4px 15px rgba(72,219,251,0.2);">
+            <div style="font-size:16px; font-weight:800; margin-bottom:15px; color:#000000 !important; background:linear-gradient(90deg, #48dbfb, #00ff88); padding:15px; border-radius:8px; text-align:center; text-shadow:1px 1px 2px rgba(255,255,255,0.8); box-shadow:0 3px 10px rgba(72,219,251,0.3);">📈 PORTFOLIO PERFORMANCE METRICS</div>
+            <div id="performance-metrics-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; font-size:10px;">
+              <!-- Performance metrics will be populated here -->
+            </div>
+          </div>
+          
+          <!-- Migration Analysis -->
+          <div id="cohort-migration" style="padding:20px; background:linear-gradient(135deg, rgba(255,167,38,0.2), rgba(255,193,7,0.15)); border-radius:12px; border:3px solid #ffa726; box-shadow:0 4px 15px rgba(255,167,38,0.3);">
+            <div style="font-size:16px; font-weight:800; margin-bottom:15px; color:#000000 !important; background:linear-gradient(90deg, #ffa726, #ffca28); padding:15px; border-radius:8px; text-align:center; text-shadow:1px 1px 2px rgba(255,255,255,0.8); box-shadow:0 3px 10px rgba(255,167,38,0.3);">🔄 CUSTOMER MIGRATION ANALYSIS</div>
+            <div id="migration-summary" style="font-size:10px;">
+              <!-- Migration summary will be populated here -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button id="refreshPortfolioBtn" style="background:#4CAF50;">🔄 Refresh Data</button>
+        <button id="portfolioTrendsBtn" style="background:#2196F3;">📈 View Trends</button>
+        <button id="portfolioAlertsBtn" style="background:#FF9800;">🚨 Detailed Alerts</button>
+        <button id="backToLeaderboardBtn" style="background:#666;">← Back to Leaderboard</button>
+      </div>
+    </section>
+
+    <!-- Right: Twin + What-if + Storyboard -->
+    <section class="card">
+      <h2 class="title">Twin Detail</h2>
+
+      <div id="detail" class="grid2">
+        <div class="kpi"><span class="label">Customer</span><b id="d_name">–</b><span id="d_loc" class="tcap">–</span></div>
+        <div class="kpi"><span class="label">Risk Score</span><b id="d_risk">–</b><span class="tcap">0–100</span></div>
+        <div class="kpi"><span class="label">12-mo Claim Prob</span><b id="d_prob">–</b></div>
+        <div class="kpi"><span class="label">Expected Loss</span><b id="d_loss">–</b></div>
+      </div>
+
+      <div style="height:14px"></div>
+      <h3 class="title">What-If Scenario</h3>
+      <div class="grid2">
+        <div>
+          <div class="label">Move State</div>
+          <select id="s_state">
+            <option value="">(no change)</option>
+            <option>FL</option><option>TX</option><option>CA</option><option>LA</option>
+            <option>MA</option><option>WA</option><option>NY</option><option>GA</option>
+          </select>
+        </div>
+        <div>
+          <div class="label">Adjust Deductible</div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <select id="s_ded_action" style="width: 90px;">
+              <option value="increase">Increase</option>
+              <option value="decrease">Decrease</option>
+            </select>
+            <span>$</span>
+            <input id="s_ded" type="number" value="1000" min="0" step="250" style="flex: 1;"/>
+          </div>
+        </div>
+      </div>
+      <div style="height:10px"></div>
+      <button id="applyBtn" disabled>Apply Scenario</button>
+      
+      <!-- ML Risk Recalculation Section -->
+      <div style="height:16px"></div>
+      <h4 class="title" style="font-size: 1.2rem;">🤖 AI Risk Analysis</h4>
+      <div class="ml-controls">
+        <button id="mlRecalculateBtn" disabled style="background: linear-gradient(135deg, #667eea, #764ba2); margin-right: 10px;">
+          🧠 Recalculate Risk (AI)
+        </button>
+        <button id="mlTrendBtn" disabled style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+          📈 View Risk Trend
+        </button>
+      </div>
+      
+      <!-- ML Results Display -->
+      <div id="ml-results" class="ml-results" style="display:none; margin-top:12px; padding:12px; background:rgba(255,255,255,0.1); border-radius:8px; border:1px solid rgba(255,255,255,0.2);">
+        <div class="ml-score-comparison">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <span class="label">Original Score:</span> <b id="ml-original-score">-</b>
+            </div>
+            <div style="color:#feca57;">
+              <span class="label">AI Adjustment:</span> <b id="ml-adjustment">-</b>
+            </div>
+            <div>
+              <span class="label">New Score:</span> <b id="ml-new-score" style="color:#48dbfb;">-</b>
+            </div>
+          </div>
+          <div style="margin-top:8px; font-size:11px; color:#8892b0;">
+            <span>Model: </span><span id="ml-model-version">-</span> | 
+            <span>Confidence: </span><span id="ml-confidence">-</span> |
+            <span>Updated: </span><span id="ml-updated">-</span>
+          </div>
+        </div>
+        
+        <div class="ml-factors" style="margin-top:12px;">
+          <div class="label" style="margin-bottom:6px;">🌦️ Risk Factors Analysis:</div>
+          <div class="factors-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(100px,1fr)); gap:8px; font-size:10px;">
+            <div>Weather: <span id="factor-weather" class="factor-value">-</span></div>
+            <div>Economic: <span id="factor-economic" class="factor-value">-</span></div>
+            <div>Traffic: <span id="factor-traffic" class="factor-value">-</span></div>
+            <div>Market: <span id="factor-market" class="factor-value">-</span></div>
+            <div>Temporal: <span id="factor-temporal" class="factor-value">-</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:16px"></div>
+      <h3 class="title">Storyboard <button id="refreshTimelineBtn" style="font-size:10px; margin-left:8px; padding:2px 6px; background:#48dbfb; border:none; border-radius:3px; color:white; cursor:pointer;" title="Refresh timeline events">🔄</button></h3>
+      <div id="timeline" class="timeline"></div>
+    </section>
+  </div>
+
+  <footer>Tip: Click a row in the leaderboard to load that customer's twin, then try a what-if.</footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    const API = 'http://localhost:3000';
+    const el = s => document.querySelector(s);
+    const fmtMoney = n => (n==null ? '–' : '$' + Number(n).toLocaleString());
+    const fmtPct = n => (n==null ? '–' : (Number(n)*100).toFixed(1) + '%');
+
+    let currentId = null;
+    let currentTwin = null;
+    let isAnimating = false;
+
+    // Helper function to get relative time (e.g., "2 hours ago", "3 days ago")
+    function getRelativeTime(date) {
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffMins = Math.floor(diffMs / (1000 * 60));
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      
+      if (diffMins < 1) return 'just now';
+      if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+      if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+      if (diffDays < 30) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+      
+      const diffMonths = Math.floor(diffDays / 30);
+      if (diffMonths < 12) return `${diffMonths} month${diffMonths > 1 ? 's' : ''} ago`;
+      
+      const diffYears = Math.floor(diffDays / 365);
+      return `${diffYears} year${diffYears > 1 ? 's' : ''} ago`;
+    }
+
+    // Animated counter function
+    function animateValue(element, start, end, duration = 1500) {
+      if (isAnimating) return;
+      isAnimating = true;
+      
+      const startValue = parseFloat(start) || 0;
+      const endValue = parseFloat(end) || 0;
+      const startTime = performance.now();
+      
+      function updateValue(currentTime) {
+        const elapsedTime = currentTime - startTime;
+        const progress = Math.min(elapsedTime / duration, 1);
+        
+        // Easing function for smooth animation
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const currentValue = startValue + (endValue - startValue) * easeOut;
+        
+        if (element.id === 'd_risk') {
+          element.textContent = currentValue.toFixed(1);
+          // Add visual feedback for risk changes
+          if (endValue > startValue) {
+            element.style.color = '#ff4444'; // Red for increased risk
+          } else if (endValue < startValue) {
+            element.style.color = '#00aa44'; // Green for decreased risk
+          }
+        } else if (element.id === 'd_prob') {
+          element.textContent = fmtPct(currentValue / 100);
+        } else if (element.id === 'd_loss') {
+          element.textContent = fmtMoney(currentValue);
+        }
+        
+        if (progress < 1) {
+          requestAnimationFrame(updateValue);
+        } else {
+          isAnimating = false;
+          // Reset color after animation
+          setTimeout(() => {
+            element.style.color = '';
+          }, 2000);
+        }
+      }
+      
+      requestAnimationFrame(updateValue);
+    }
+
+    async function loadLeaderboard(){
+      const thr = Number(el('#thr').value || 50);
+      const lim = Number(el('#lim').value || 5);
+      const res = await fetch(`${API}/api/high-risk?threshold=${thr}&limit=${lim}`);
+      const rows = await res.json();
+      const tb = el('#tbl tbody');
+      tb.innerHTML = '';
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.customer_id}</td>
+          <td>${r.name}</td>
+          <td>${r.state}</td>
+          <td>${Number(r.base_risk_score).toFixed(1)}</td>
+          <td>${fmtPct(r.next12m_claim_prob)}</td>
+          <td>${fmtMoney(r.next12m_expected_loss)}</td>`;
+        tr.onclick = () => loadTwin(r.customer_id);
+        tb.appendChild(tr);
+      });
+    }
+
+    async function loadTwin(id, animate = false){
+      currentId = id;
+      el('#applyBtn').disabled = false;
+      el('#mlRecalculateBtn').disabled = false;
+      el('#mlTrendBtn').disabled = false;
+
+      const [twinRes, timeRes] = await Promise.all([
+        fetch(`${API}/api/twin/${id}`),
+        fetch(`${API}/api/timeline/${id}`)
+      ]);
+      const newTwin = await twinRes.json();
+      const timelineData = await timeRes.json();
+      let timeline = Array.isArray(timelineData) ? timelineData : [];
+
+      // Store previous values for animation
+      const prevTwin = currentTwin;
+      currentTwin = newTwin;
+
+      // Initialize deductible history for this customer
+      initializeDeductibleHistory(newTwin);
+
+      el('#d_name').textContent = newTwin?.name ?? '–';
+      el('#d_loc').textContent = newTwin ? `${newTwin.city || ''} ${newTwin.state || ''} ${newTwin.zip || ''}`.trim() : '–';
+      
+      // Animate numeric values if this is a scenario update
+      if (animate && prevTwin && newTwin) {
+        animateValue(el('#d_risk'), prevTwin.base_risk_score, newTwin.base_risk_score);
+        animateValue(el('#d_prob'), prevTwin.next12m_claim_prob * 100, newTwin.next12m_claim_prob * 100);
+        animateValue(el('#d_loss'), prevTwin.next12m_expected_loss, newTwin.next12m_expected_loss);
+      } else {
+        // Set values immediately for initial load
+        el('#d_risk').textContent = newTwin?.base_risk_score?.toFixed(1) ?? '–';
+        el('#d_prob').textContent = fmtPct(newTwin?.next12m_claim_prob);
+        el('#d_loss').textContent = fmtMoney(newTwin?.next12m_expected_loss);
+      }
+
+      const tl = el('#timeline'); tl.innerHTML = '';
+      
+      // Handle empty timeline case - auto-create baseline events
+      if (!timeline || timeline.length === 0) {
+        console.log(`No timeline events found for customer ${id}. Creating baseline events...`);
+        
+        // Show loading state
+        const loadingRow = document.createElement('div');
+        loadingRow.className = 'titem';
+        loadingRow.innerHTML = `
+          <div class="dot" style="background-color: #48dbfb;"></div>
+          <div>
+            <div style="color: #48dbfb; font-weight: 600;">🔄 Creating Customer Timeline...</div>
+            <div class="tcap">Setting up baseline events for new customer... <span class="ok">#initializing</span></div>
+          </div>`;
+        tl.appendChild(loadingRow);
+        
+        try {
+          // Auto-create baseline timeline events
+          await createBaselineTimeline(id, newTwin);
+          
+          // Reload timeline after creation
+          const timeRes = await fetch(`${API}/api/timeline/${id}`);
+          const timelineData = await timeRes.json();
+          const newTimeline = Array.isArray(timelineData) ? timelineData : [];
+          
+          // Clear loading state and populate with new timeline
+          tl.innerHTML = '';
+          if (newTimeline && newTimeline.length > 0) {
+            timeline = Array.isArray(newTimeline) ? newTimeline : []; // Update timeline variable to continue with normal processing
+          } else {
+            // Fallback if still no events
+            const emptyRow = document.createElement('div');
+            emptyRow.className = 'titem';
+            emptyRow.innerHTML = `
+              <div class="dot" style="background-color: #ffa726;"></div>
+              <div>
+                <div style="color: #ffa726; font-weight: 600;">⚠️ Timeline Creation Failed</div>
+                <div class="tcap">Unable to create baseline events. Please try refreshing or contact support. <span class="warn">#error</span></div>
+              </div>`;
+            tl.appendChild(emptyRow);
+            return;
+          }
+        } catch (error) {
+          console.error('Error creating baseline timeline:', error);
+          tl.innerHTML = '';
+          const errorRow = document.createElement('div');
+          errorRow.className = 'titem';
+          errorRow.innerHTML = `
+            <div class="dot" style="background-color: #ff4444;"></div>
+            <div>
+              <div style="color: #ff4444; font-weight: 600;">❌ Timeline Error</div>
+              <div class="tcap">Failed to initialize customer timeline: ${error.message} <span class="warn">#error</span></div>
+            </div>`;
+          tl.appendChild(errorRow);
+          return;
+        }
+      }
+      
+      // Ensure timeline is an array before processing
+      const timelineArray = Array.isArray(timeline) ? timeline : [];
+      timelineArray.forEach(ev => {
+        const row = document.createElement('div');
+        row.className = 'titem';
+        const eventDate = new Date(ev.event_ts);
+        const dateStr = eventDate.toLocaleDateString();
+        const timeStr = eventDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second: '2-digit'});
+        const relativeTime = getRelativeTime(eventDate);
+        
+        // Enhanced display for scenario events
+        const isScenario = ev.tag === 'scenario';
+        const timestampDisplay = isScenario 
+          ? `<span class="scenario-timestamp">📅 ${dateStr} ⏰ ${timeStr}</span>` 
+          : `<b>${dateStr} at ${timeStr}</b>`;
+        
+        // Extract and highlight deductible amounts from details
+        let enhancedDetails = ev.details;
+        if (isScenario) {
+          // Check for final deductible information
+          const finalMatch = ev.details.match(/Final deductible: \$(\d+(?:,\d{3})*) in ([A-Z]{2})/);
+          
+                     if (finalMatch) {
+             // Split the details to show main action and final result separately
+             const mainDetails = ev.details.split(' | ')[0];
+             const finalAmount = parseInt(finalMatch[1]);
+             const state = finalMatch[2];
+             
+             // Check for no-change scenarios first
+             if (mainDetails.includes('no change')) {
+               enhancedDetails = mainDetails.replace(/\$(\d+(?:,\d{3})*)/g, '<span class="amount-highlight">$$$1</span>');
+               const noChangeDisplay = `<span class="deductible-progression">
+                 <span class="no-change-amount">⚪ No Change: $${finalAmount}</span> 
+                 <span class="state-info">in ${state}</span>
+               </span>`;
+               enhancedDetails += ` ${noChangeDisplay}`;
+             } else {
+               // Calculate before and change amounts for actual changes
+               let beforeAmount = 0;
+               let changeAmount = 0;
+               let actionType = '';
+               
+                             if (mainDetails.includes('increased deductible by')) {
+                const changeMatch = mainDetails.match(/increased deductible by \$(\d+(?:,\d{3})*)/);
+                if (changeMatch) {
+                  changeAmount = parseInt(changeMatch[1]);
+                  beforeAmount = finalAmount - changeAmount;
+                  actionType = 'increased';
+                }
+              } else if (mainDetails.includes('decreased deductible by')) {
+                const changeMatch = mainDetails.match(/decreased deductible by \$(\d+(?:,\d{3})*)/);
+                if (changeMatch) {
+                  changeAmount = parseInt(changeMatch[1]);
+                  beforeAmount = finalAmount + changeAmount;
+                  actionType = 'decreased';
+                }
+              } else if (mainDetails.includes('restored deductible to')) {
+                 const restoreMatch = mainDetails.match(/restored deductible to \$(\d+(?:,\d{3})*)/);
+                 if (restoreMatch) {
+                   changeAmount = parseInt(restoreMatch[1]);
+                   actionType = 'restored';
+                 }
+               }
+               
+               // Create enhanced display with before/after progression
+               let progressionDisplay = '';
+                             if (actionType === 'increased') {
+                progressionDisplay = `<span class="deductible-progression">
+                  <span class="before-amount">Was: $${beforeAmount}</span> 
+                  <span class="arrow">→</span> 
+                  <span class="change-amount">+$${changeAmount}</span> 
+                  <span class="arrow">→</span> 
+                  <span class="final-amount">Now: $${finalAmount}</span>
+                </span>`;
+              } else if (actionType === 'decreased') {
+                progressionDisplay = `<span class="deductible-progression">
+                  <span class="before-amount">Was: $${beforeAmount}</span> 
+                  <span class="arrow">→</span> 
+                  <span class="change-amount decrease-amount">-$${changeAmount}</span> 
+                  <span class="arrow">→</span> 
+                  <span class="final-amount">Now: $${finalAmount}</span>
+                </span>`;
+              } else if (actionType === 'restored') {
+                 progressionDisplay = `<span class="deductible-progression">
+                   <span class="restored-amount">↻ Restored to: $${finalAmount}</span> 
+                   <span class="state-info">in ${state}</span>
+                 </span>`;
+               } else {
+                 progressionDisplay = `<span class="deductible-progression">
+                   <span class="final-amount">Final: $${finalAmount} in ${state}</span>
+                 </span>`;
+               }
+               
+               // Highlight dollar amounts in the main details
+               enhancedDetails = mainDetails.replace(/\$(\d+(?:,\d{3})*)/g, '<span class="amount-highlight">$$$1</span>');
+               enhancedDetails += ` ${progressionDisplay}`;
+             }
+           } else {
+            // Fallback for events without final deductible info
+            enhancedDetails = ev.details.replace(/\$(\d+(?:,\d{3})*)/g, '<span class="amount-highlight">$$$1</span>');
+          }
+        }
+        
+        row.innerHTML = `
+          <div class="dot ${isScenario ? 'scenario-dot' : ''}"></div>
+          <div>
+            <div>${timestampDisplay} – ${ev.title}</div>
+            <div class="tcap">${enhancedDetails} <span class="time-ago">${relativeTime}</span> <span class="${/claim|risk/i.test(ev.tag)?'warn':'ok'}">#${ev.tag}</span></div>
+          </div>`;
+        tl.appendChild(row);
+      });
+    }
+
+    // Automatic baseline timeline creation for new customers
+    async function createBaselineTimeline(customerId, twin) {
+      if (!customerId || !twin) {
+        throw new Error('Customer ID and twin data required for timeline creation');
+      }
+      
+      const customerState = twin.state || 'Unknown';
+      const customerName = twin.name || 'Customer';
+      
+      // Generate realistic backdated timestamps
+      const now = new Date();
+      const onboardingDate = new Date(now);
+      onboardingDate.setDate(onboardingDate.getDate() - Math.floor(Math.random() * 90) - 30); // 30-120 days ago
+      
+      const assessmentDate = new Date(onboardingDate);
+      assessmentDate.setHours(assessmentDate.getHours() + 2);
+      
+      const activationDate = new Date(assessmentDate);
+      activationDate.setHours(activationDate.getHours() + 1);
+      
+      // Create baseline timeline events via API
+      const timelineEvents = [
+        {
+          customer_id: customerId,
+          event_ts: onboardingDate.toISOString(),
+          title: 'Customer Onboarded',
+          details: `Initial risk assessment completed in ${customerState}. Baseline deductible set to $1,500.`,
+          tag: 'onboarding'
+        },
+        {
+          customer_id: customerId,
+          event_ts: assessmentDate.toISOString(),
+          title: 'Initial Risk Profile Created',
+          details: `Comprehensive risk analysis completed. Policy activated with standard coverage.`,
+          tag: 'assessment'
+        },
+        {
+          customer_id: customerId,
+          event_ts: activationDate.toISOString(),
+          title: 'Policy Activated',
+          details: `Insurance policy activated for ${customerName} in ${customerState}. Coverage effective immediately.`,
+          tag: 'policy'
+        }
+      ];
+      
+      // Insert each event
+      for (const event of timelineEvents) {
+        const response = await fetch(`${API}/api/timeline/create`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(event)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to create timeline event: ${response.statusText}`);
+        }
+      }
+      
+      console.log(`✅ Created ${timelineEvents.length} baseline timeline events for customer ${customerId}`);
+    }
+
+    // State-based deductible memory - customer-specific
+    let stateDeductibleHistory = {};
+    
+    // Initialize deductible history for current customer
+    function initializeDeductibleHistory(twin) {
+      if (!twin) return;
+      
+      // Reset for new customer
+      stateDeductibleHistory = {};
+      
+      // Set current state's deductible as baseline (default $1500 from onboarding)
+      const currentState = twin.state;
+      const baselineDeductible = 1500;
+      
+      // Special case for Carlos (customer 4) - preserve his known history
+      if (twin.name === 'Carlos Ramirez') {
+        stateDeductibleHistory = {
+          'TX': 1500,  // Carlos moved to TX, final deductible: $1500 (restored)
+          'LA': 2500,  // Carlos moved to LA, final deductible: $2500
+          'WA': 1750   // Carlos moved to WA, final deductible: $1750 (current)
+        };
+      } else {
+        // For other customers, start with baseline deductible in their current state
+        stateDeductibleHistory[currentState] = baselineDeductible;
+      }
+      
+      console.log(`Initialized deductible history for ${twin.name}:`, stateDeductibleHistory);
+    }
+
+    async function applyScenario(){
+      if(!currentId || !currentTwin) return;
+      
+      // Store before values for PDF generation
+      const beforeValues = {
+        name: currentTwin.name,
+        riskScore: currentTwin.base_risk_score,
+        claimProb: currentTwin.next12m_claim_prob,
+        expectedLoss: currentTwin.next12m_expected_loss
+      };
+      
+      const change = {};
+      const s = el('#s_state').value.trim();
+      const d = Number(el('#s_ded').value || 0);
+      const action = el('#s_ded_action').value; // 'increase' or 'decrease'
+      
+      // Smart deductible logic based on state history
+      let isNoChange = false;
+      
+      if(s) {
+        // Check if already in the target state
+        const currentState = currentTwin.state;
+        
+        if (s === currentState) {
+          // Already in the same state - check if deductible would actually change
+          if (stateDeductibleHistory[s] && !d) {
+            // No deductible change specified and already in this state
+            isNoChange = true;
+            change.no_change = true;
+            change.reason = `Already in ${s} with $${stateDeductibleHistory[s]} deductible`;
+          } else if (d > 0) {
+            // Explicit deductible change in same state
+            const currentDeductible = stateDeductibleHistory[s] || 0;
+            let newDeductible;
+            
+            if (action === 'increase') {
+              change.increase_deductible = d;
+              newDeductible = currentDeductible + d;
+            } else { // decrease
+              change.decrease_deductible = d;
+              newDeductible = Math.max(0, currentDeductible - d); // Don't go below 0
+            }
+            
+            stateDeductibleHistory[s] = newDeductible;
+            
+            // Add before/after amounts for timeline display
+            change.before_deductible = currentDeductible;
+            change.final_deductible = newDeductible;
+          }
+        } else {
+          // Moving to different state
+          change.move_state = s;
+          
+          // Check if returning to previously visited state AND no deductible specified
+          if (stateDeductibleHistory[s] && d === 0) {
+            // Restore previous deductible only when no new deductible specified
+            change.restore_deductible = stateDeductibleHistory[s];
+            console.log(`Returning to ${s} with no deductible change, restoring to $${stateDeductibleHistory[s]}`);
+          } else if (d > 0) {
+            // Apply deductible change (new state OR returning state with explicit change)
+            const currentDeductible = stateDeductibleHistory[currentTwin.state] || 0;
+            let newDeductible;
+            
+            if (action === 'increase') {
+              change.increase_deductible = d;
+              newDeductible = currentDeductible + d;
+            } else { // decrease
+              change.decrease_deductible = d;
+              newDeductible = Math.max(0, currentDeductible - d); // Don't go below 0
+            }
+            
+            stateDeductibleHistory[s] = newDeductible; // Update the state's deductible
+            
+            // Add before/after amounts for timeline display
+            change.before_deductible = currentDeductible;
+            change.final_deductible = newDeductible;
+            
+            console.log(`Moving to ${s} with $${d} ${action}, new deductible: $${newDeductible}`);
+          } else {
+            // Moving to new state with no deductible change
+            const currentDeductible = stateDeductibleHistory[currentTwin.state] || 0;
+            stateDeductibleHistory[s] = currentDeductible; // Keep current deductible level
+          }
+        }
+      } else if(d > 0) {
+        // Just changing deductible in current state
+        const currentState = currentTwin.state || 'unknown';
+        const currentDeductible = stateDeductibleHistory[currentState] || 0;
+        let newDeductible;
+        
+        if (action === 'increase') {
+          change.increase_deductible = d;
+          newDeductible = currentDeductible + d;
+        } else { // decrease
+          change.decrease_deductible = d;
+          newDeductible = Math.max(0, currentDeductible - d); // Don't go below 0
+        }
+        
+        stateDeductibleHistory[currentState] = newDeductible;
+        
+        // Add before/after amounts for timeline display
+        change.before_deductible = currentDeductible;
+        change.final_deductible = newDeductible;
+      } else {
+        // No state change and no deductible change
+        isNoChange = true;
+        change.no_change = true;
+        change.reason = 'No changes specified';
+      }
+
+      // Create descriptive scenario name based on actual changes
+      let scenarioName = 'What-if: ';
+      
+      if (isNoChange) {
+        scenarioName += `no change (${change.reason})`;
+      } else if (s) {
+        scenarioName += `move to ${s}`;
+        if (change.restore_deductible) {
+          scenarioName += ` (restore $${change.restore_deductible} deductible)`;
+        } else if (change.increase_deductible) {
+          scenarioName += ` + $${change.increase_deductible} deductible`;
+        } else if (change.decrease_deductible) {
+          scenarioName += ` - $${change.decrease_deductible} deductible`;
+        }
+      } else if (change.increase_deductible) {
+        scenarioName += `increase deductible by $${change.increase_deductible}`;
+      } else if (change.decrease_deductible) {
+        scenarioName += `decrease deductible by $${change.decrease_deductible}`;
+      } else {
+        scenarioName += 'no changes';
+      }
+      
+      const body = { customer_id: currentId, name: scenarioName, change_json: change };
+      
+      // Show loading state
+      const applyBtn = el('#applyBtn');
+      const originalText = applyBtn.textContent;
+      applyBtn.textContent = 'Applying...';
+      applyBtn.disabled = true;
+      
+      try {
+        const res = await fetch(`${API}/api/scenario`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const out = await res.json();
+
+        // Show loading state for storyboard
+        const tl = el('#timeline');
+        tl.innerHTML = '<div class="titem"><div class="dot" style="background-color: #48dbfb;"></div><div><div style="color: #48dbfb; font-weight: 600;">🔄 Updating Storyboard...</div><div class="tcap">Loading latest timeline events...</div></div></div>';
+        
+        // Reload twin data to get updated values
+        const updatedTwinRes = await fetch(`${API}/api/twin/${currentId}`);
+        const updatedTwin = await updatedTwinRes.json();
+        
+        // Show detailed before/after comparison
+        const beforeAfterMsg = `🎯 Scenario Applied Successfully! (ID: ${out.scenario_id})
+        
+📊 BEFORE vs AFTER COMPARISON:
+
+🎲 Risk Score:
+   • Before: ${beforeValues.riskScore}
+   • After:  ${updatedTwin.base_risk_score}
+   • Change: ${(updatedTwin.base_risk_score - beforeValues.riskScore).toFixed(1)}
+
+📈 Claim Probability:
+   • Before: ${(beforeValues.claimProb * 100).toFixed(1)}%
+   • After:  ${(updatedTwin.next12m_claim_prob * 100).toFixed(1)}%
+   • Change: ${((updatedTwin.next12m_claim_prob - beforeValues.claimProb) * 100).toFixed(1)}%
+
+💰 Expected Loss:
+   • Before: $${beforeValues.expectedLoss.toLocaleString()}
+   • After:  $${updatedTwin.next12m_expected_loss.toLocaleString()}
+   • Change: $${(updatedTwin.next12m_expected_loss - beforeValues.expectedLoss).toLocaleString()}
+
+${out.deductible_progression ? `💳 Deductible: $${out.deductible_progression.before} → $${out.deductible_progression.final}` : ''}
+
+Would you like to download a PDF report of these results?`;
+
+        const result = confirm(beforeAfterMsg);
+        
+        // Reload with animation using the updated values
+        const prevTwin = currentTwin;
+        currentTwin = updatedTwin;
+        
+        // Animate the changes
+        if (prevTwin && updatedTwin) {
+          animateValue(el('#d_risk'), prevTwin.base_risk_score, updatedTwin.base_risk_score);
+          animateValue(el('#d_prob'), prevTwin.next12m_claim_prob * 100, updatedTwin.next12m_claim_prob * 100);
+          animateValue(el('#d_loss'), prevTwin.next12m_expected_loss, updatedTwin.next12m_expected_loss);
+        }
+        
+        // Reload timeline to show new scenario
+        await loadTwin(currentId, false);
+        
+        // Generate PDF if requested
+        if (result) {
+          generatePDF(beforeValues, currentTwin, scenarioName, out.scenario_id);
+        }
+        
+      } catch (error) {
+        alert('Error applying scenario: ' + error.message);
+      } finally {
+        // Reset button
+        applyBtn.textContent = originalText;
+        applyBtn.disabled = false;
+      }
+    }
+
+    // PDF Generation Function
+    function generatePDF(beforeValues, afterValues, scenarioName, scenarioId) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      // Header
+      doc.setFontSize(20);
+      doc.text('RiskTwin Scenario Analysis Report', 20, 30);
+      
+      doc.setFontSize(12);
+      doc.text(`Scenario: ${scenarioName}`, 20, 45);
+      doc.text(`Scenario ID: ${scenarioId}`, 20, 55);
+      doc.text(`Customer: ${beforeValues.name}`, 20, 65);
+      doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 75);
+      
+      // Before/After Comparison
+      doc.setFontSize(16);
+      doc.text('Risk Assessment Comparison', 20, 95);
+      
+      doc.setFontSize(12);
+      const yStart = 110;
+      const lineHeight = 15;
+      
+      doc.text('Metric', 20, yStart);
+      doc.text('Before', 80, yStart);
+      doc.text('After', 130, yStart);
+      doc.text('Change', 170, yStart);
+      
+      // Risk Score
+      const riskChange = ((afterValues.base_risk_score - beforeValues.riskScore) / beforeValues.riskScore * 100).toFixed(1);
+      doc.text('Risk Score', 20, yStart + lineHeight);
+      doc.text(beforeValues.riskScore.toFixed(1), 80, yStart + lineHeight);
+      doc.text(afterValues.base_risk_score.toFixed(1), 130, yStart + lineHeight);
+      doc.text(`${riskChange > 0 ? '+' : ''}${riskChange}%`, 170, yStart + lineHeight);
+      
+      // Claim Probability
+      const probChange = ((afterValues.next12m_claim_prob - beforeValues.claimProb) / beforeValues.claimProb * 100).toFixed(1);
+      doc.text('12mo Claim Prob', 20, yStart + lineHeight * 2);
+      doc.text(fmtPct(beforeValues.claimProb), 80, yStart + lineHeight * 2);
+      doc.text(fmtPct(afterValues.next12m_claim_prob), 130, yStart + lineHeight * 2);
+      doc.text(`${probChange > 0 ? '+' : ''}${probChange}%`, 170, yStart + lineHeight * 2);
+      
+      // Expected Loss
+      const lossChange = afterValues.next12m_expected_loss - beforeValues.expectedLoss;
+      doc.text('Expected Loss', 20, yStart + lineHeight * 3);
+      doc.text(fmtMoney(beforeValues.expectedLoss), 80, yStart + lineHeight * 3);
+      doc.text(fmtMoney(afterValues.next12m_expected_loss), 130, yStart + lineHeight * 3);
+      doc.text(`${lossChange > 0 ? '+' : ''}${fmtMoney(lossChange)}`, 170, yStart + lineHeight * 3);
+      
+      // Summary
+      doc.setFontSize(14);
+      doc.text('Summary', 20, yStart + lineHeight * 5);
+      doc.setFontSize(11);
+      
+      let summary = '';
+      if (parseFloat(riskChange) > 0) {
+        summary = 'This scenario increases the customer\'s risk profile. ';
+      } else if (parseFloat(riskChange) < 0) {
+        summary = 'This scenario reduces the customer\'s risk profile. ';
+      } else {
+        summary = 'This scenario has minimal impact on the customer\'s risk profile. ';
+      }
+      
+      summary += `The expected loss ${lossChange > 0 ? 'increases' : lossChange < 0 ? 'decreases' : 'remains unchanged'} by ${fmtMoney(Math.abs(lossChange))}.`;
+      
+      const splitText = doc.splitTextToSize(summary, 170);
+      doc.text(splitText, 20, yStart + lineHeight * 6);
+      
+      // Save PDF
+      doc.save(`RiskTwin_Scenario_${scenarioId}_${new Date().toISOString().split('T')[0]}.pdf`);
+    }
+
+    // Portfolio Analytics Functions
+    async function loadPortfolioAnalytics() {
+      try {
+        // Get refresh button and show loading state
+        const refreshBtn = el('#refreshPortfolioBtn');
+        const originalText = refreshBtn ? refreshBtn.textContent : '';
+        if (refreshBtn) {
+          refreshBtn.textContent = '🔄 Refreshing...';
+          refreshBtn.disabled = true;
+        }
+
+        // Hide leaderboard and twin sections, show portfolio
+        el('#portfolio-section').style.display = 'block';
+        document.querySelector('section.card:first-child').style.display = 'none';
+        document.querySelector('section.card:nth-child(3)').style.display = 'none'; // Twin detail section
+
+        // Show loading state in main areas
+        el('#portfolio-total-customers').textContent = '⏳';
+        el('#portfolio-avg-risk').textContent = '⏳';
+        el('#portfolio-total-exposure').textContent = '⏳';
+        el('#portfolio-risk-spread').textContent = '⏳';
+
+        // Load portfolio data in parallel
+        const [summaryRes, alertsRes] = await Promise.all([
+          fetch(`${API}/api/portfolio/summary`),
+          fetch(`${API}/api/portfolio/alerts`)
+        ]);
+
+        const summary = await summaryRes.json();
+        const alerts = await alertsRes.json();
+
+        // Update overview metrics
+        el('#portfolio-total-customers').textContent = summary.overview.total_customers;
+        el('#portfolio-avg-risk').textContent = summary.overview.avg_risk_score;
+        el('#portfolio-total-exposure').textContent = fmtMoney(summary.overview.total_expected_loss);
+        el('#portfolio-risk-spread').textContent = summary.overview.risk_spread;
+
+        // Update risk tiers
+        const riskTiersDiv = el('#risk-tiers-display');
+        riskTiersDiv.innerHTML = summary.risk_tiers.map(tier => `
+          <div class="risk-tier-card" style="border-left: 4px solid ${tier.color};">
+            <div class="risk-tier-label" style="color: ${tier.color};">${tier.label}</div>
+            <div class="risk-tier-count" style="color: ${tier.color};">${tier.customer_count}</div>
+            <div class="risk-tier-percentage">${tier.percentage}%</div>
+          </div>
+        `).join('');
+
+        // Update geographic distribution
+        const geoTableBody = el('#geographic-table-body');
+        geoTableBody.innerHTML = summary.geographic_distribution.map(geo => {
+          const riskColor = getRiskColor(parseFloat(geo.avg_risk_score));
+          return `
+            <tr>
+              <td style="padding:8px; font-weight:600;">${geo.state}</td>
+              <td style="padding:8px; text-align:center;">${geo.customer_count}</td>
+              <td style="padding:8px; text-align:center; color:${riskColor}; font-weight:600;">${geo.avg_risk_score}</td>
+              <td style="padding:8px; text-align:center;">${fmtMoney(geo.total_exposure)}</td>
+              <td style="padding:8px; text-align:center;">
+                <span style="background:${riskColor}; padding:2px 6px; border-radius:4px; font-size:10px; color:#000; font-weight:600;">
+                  ${geo.risk_level}
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        // Update alerts
+        displayPortfolioAlerts(alerts);
+
+        // Show success feedback
+        const timestamp = new Date().toLocaleTimeString();
+        if (refreshBtn) {
+          refreshBtn.style.background = '#4CAF50';
+          setTimeout(() => {
+            refreshBtn.style.background = '';
+          }, 2000);
+        }
+
+        // Optional: Show toast notification
+        showRefreshSuccess(`Portfolio data refreshed successfully at ${timestamp}`);
+
+      } catch (error) {
+        console.error('Portfolio Analytics Error:', error);
+        alert('Error loading portfolio analytics: ' + error.message);
+      } finally {
+        // Restore refresh button
+        const refreshBtn = el('#refreshPortfolioBtn');
+        if (refreshBtn) {
+          refreshBtn.textContent = '🔄 Refresh Data';
+          refreshBtn.disabled = false;
+        }
+      }
+    }
+
+    // Helper function to show refresh success
+    function showRefreshSuccess(message) {
+      // Create temporary success indicator
+      const successDiv = document.createElement('div');
+      successDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4CAF50;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 6px;
+        font-weight: 600;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+      `;
+      successDiv.textContent = `✅ ${message}`;
+      
+      document.body.appendChild(successDiv);
+      
+      // Animate in
+      setTimeout(() => {
+        successDiv.style.opacity = '1';
+        successDiv.style.transform = 'translateX(0)';
+      }, 100);
+      
+      // Animate out and remove
+      setTimeout(() => {
+        successDiv.style.opacity = '0';
+        successDiv.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+          if (successDiv.parentNode) {
+            successDiv.parentNode.removeChild(successDiv);
+          }
+        }, 300);
+      }, 3000);
+    }
+
+    function displayPortfolioAlerts(alerts) {
+      const alertsDiv = el('#portfolio-alerts');
+      
+      if (alerts.total_alerts === 0) {
+        alertsDiv.innerHTML = '<div style="text-align:center; color:#4CAF50; padding:20px;">✅ No active alerts - Portfolio is healthy!</div>';
+        return;
+      }
+
+      alertsDiv.innerHTML = alerts.alerts.map(alert => `
+        <div class="alert-item alert-${alert.severity.toLowerCase()}">
+          <div class="alert-title">${alert.title}</div>
+          <div class="alert-description">${alert.description}</div>
+          <div class="alert-recommendation">💡 ${alert.recommendation}</div>
+        </div>
+      `).join('');
+    }
+
+    async function showPortfolioTrends() {
+      try {
+        const response = await fetch(`${API}/api/portfolio/trends?days=30`);
+        const trends = await response.json();
+        
+        const analysis = trends.trend_analysis;
+        const recentData = trends.data_points.slice(-7); // Last 7 days
+        
+        alert(`📈 Portfolio Risk Trends (30 Days)\n\n` +
+              `Current Direction: ${analysis.risk_direction === 'increasing' ? '📈 Rising' : '📉 Declining'}\n` +
+              `Risk Range: ${analysis.min_risk} - ${analysis.max_risk}\n` +
+              `Average Scenarios/Day: ${analysis.avg_scenarios_per_day}\n\n` +
+              `Recent 7-Day Summary:\n` +
+              recentData.map(d => `${d.date}: Risk ${d.avg_portfolio_risk}, ${d.scenario_count} scenarios`).join('\n'));
+        
+      } catch (error) {
+        console.error('Portfolio Trends Error:', error);
+        alert('Error loading portfolio trends: ' + error.message);
+      }
+    }
+
+    async function showDetailedAlerts() {
+      try {
+        const [alertsRes, concentrationsRes] = await Promise.all([
+          fetch(`${API}/api/portfolio/alerts`),
+          fetch(`${API}/api/portfolio/concentrations`)
+        ]);
+        
+        const alerts = await alertsRes.json();
+        const concentrations = await concentrationsRes.json();
+        
+        let alertText = `🚨 Detailed Portfolio Alerts\n\n`;
+        alertText += `Summary: ${alerts.summary.critical} Critical, ${alerts.summary.high} High, ${alerts.summary.medium} Medium\n\n`;
+        
+        if (alerts.total_alerts > 0) {
+          alertText += alerts.alerts.slice(0, 5).map(alert => 
+            `${alert.severity}: ${alert.title}\n${alert.recommendation}\n`
+          ).join('\n');
+        }
+        
+        alertText += `\n📍 Top Risk Concentrations:\n`;
+        concentrations.geographic_concentrations.slice(0, 3).forEach(geo => {
+          alertText += `${geo.state}: ${geo.customer_count} customers, ${geo.avg_risk} avg risk\n`;
+        });
+        
+        alert(alertText);
+        
+      } catch (error) {
+        console.error('Detailed Alerts Error:', error);
+        alert('Error loading detailed alerts: ' + error.message);
+      }
+    }
+
+    function backToLeaderboard() {
+      // Show leaderboard and twin sections, hide portfolio
+      el('#portfolio-section').style.display = 'none';
+      document.querySelector('section.card:first-child').style.display = 'block';
+      document.querySelector('section.card:nth-child(3)').style.display = 'block';
+    }
+
+    function getRiskColor(riskScore) {
+      if (riskScore >= 85) return '#8B0000';
+      if (riskScore >= 70) return '#F44336';
+      if (riskScore >= 40) return '#FF9800';
+      return '#4CAF50';
+    }
+
+    // Cohort Analysis Functions
+    async function loadCohortAnalysis(analysisType) {
+      try {
+        // Map analysis types to button IDs
+        const buttonIdMap = {
+          'risk_based': '#loadRiskCohortsBtn',
+          'geographic': '#loadGeoCohortsBtn', 
+          'policy_vintage': '#loadVintageCohortsBtn',
+          'claim_behavior': '#loadClaimCohortsBtn'
+        };
+        
+        const cohortBtn = el(buttonIdMap[analysisType]);
+        if (!cohortBtn) {
+          throw new Error(`Button not found for analysis type: ${analysisType}`);
+        }
+        
+        const originalText = cohortBtn.textContent;
+        cohortBtn.textContent = '📊 Loading...';
+        cohortBtn.disabled = true;
+
+        const timeFrame = el('#cohortTimeFrame').value;
+        
+        // Add cache-busting to prevent browser from serving stale empty responses
+        const cacheBuster = Date.now();
+        const url = `${API}/api/cohort/analysis?type=${analysisType}&timeFrame=${timeFrame}&_cb=${cacheBuster}`;
+        
+        console.log(`🔄 Fetching cohort data: ${url}`);
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const cohortData = await response.json();
+        
+        // Validate we got proper data structure
+        if (!cohortData || !cohortData.segments) {
+          console.warn('⚠️ Empty or invalid cohort data received:', cohortData);
+          throw new Error('Invalid cohort data structure received');
+        }
+        
+        console.log(`✅ Cohort data received: ${cohortData.segments.length} segments for ${analysisType}`);
+
+        // Show cohort analysis container
+        el('#cohort-analysis-container').style.display = 'block';
+
+        // Update header
+        el('#cohort-type-display').textContent = getCohortTypeLabel(analysisType);
+
+        // Display cohort segments
+        console.log('📊 Displaying cohort segments:', cohortData.segments?.length);
+        displayCohortSegments(cohortData.segments, analysisType);
+
+        // Display performance metrics
+        console.log('📈 Displaying performance metrics:', cohortData.performance_metrics?.length);
+        displayCohortPerformance(cohortData.performance_metrics);
+
+        // Display migration analysis
+        console.log('🔄 Displaying migration analysis:', cohortData.migration_analysis?.high_activity_customers?.length);
+        displayMigrationAnalysis(cohortData.migration_analysis);
+        
+        // Debug: Log all section visibility
+        setTimeout(() => {
+          console.log('🔍 Section visibility check:');
+          console.log('  - Container:', el('#cohort-analysis-container').style.display);
+          console.log('  - Segments grid:', el('#cohort-segments-grid').innerHTML.length > 0 ? 'Populated' : 'Empty');
+          console.log('  - Performance grid:', el('#performance-metrics-grid').innerHTML.length > 0 ? 'Populated' : 'Empty');
+          console.log('  - Migration summary:', el('#migration-summary').innerHTML.length > 0 ? 'Populated' : 'Empty');
+        }, 500);
+
+        // Scroll to results and highlight them
+        el('#cohort-analysis-container').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Temporarily highlight the container with pulsing effect
+        const container = el('#cohort-analysis-container');
+        container.style.border = '4px solid #00ff88';
+        container.style.boxShadow = '0 0 30px rgba(0,255,136,0.6), inset 0 0 20px rgba(0,255,136,0.2)';
+        container.style.animation = 'pulse 2s ease-in-out 3';
+        
+        // Add pulsing animation style if it doesn't exist
+        if (!document.querySelector('#pulse-style')) {
+          const style = document.createElement('style');
+          style.id = 'pulse-style';
+          style.textContent = `
+            @keyframes pulse {
+              0% { box-shadow: 0 0 30px rgba(0,255,136,0.6), inset 0 0 20px rgba(0,255,136,0.2); }
+              50% { box-shadow: 0 0 50px rgba(0,255,136,0.9), inset 0 0 30px rgba(0,255,136,0.4); }
+              100% { box-shadow: 0 0 30px rgba(0,255,136,0.6), inset 0 0 20px rgba(0,255,136,0.2); }
+            }
+          `;
+          document.head.appendChild(style);
+        }
+        
+        setTimeout(() => {
+          container.style.border = '2px solid #00ff88';
+          container.style.boxShadow = '0 4px 20px rgba(0,255,136,0.2)';
+          container.style.animation = 'none';
+        }, 6000);
+        
+        // Show success message with more details
+        const segmentCount = cohortData.segments?.length || 0;
+        const perfMetrics = cohortData.performance_metrics?.length || 0;
+        const hasMigration = cohortData.migration_analysis?.high_activity_customers?.length || 0;
+        
+        alert(`👥 Cohort Analysis Complete!\n\n📊 Analysis Type: ${getCohortTypeLabel(analysisType)}\n🔢 Segments Found: ${segmentCount}\n📈 Performance Metrics: ${perfMetrics}\n🔄 Active Customers: ${hasMigration}\n⏰ Time Frame: ${timeFrame}\n\n✨ Check the detailed breakdown highlighted below!`);
+
+      } catch (error) {
+        console.error('Cohort Analysis Error:', error);
+        alert('Error loading cohort analysis: ' + error.message);
+      } finally {
+        const buttonIdMap = {
+          'risk_based': '#loadRiskCohortsBtn',
+          'geographic': '#loadGeoCohortsBtn', 
+          'policy_vintage': '#loadVintageCohortsBtn',
+          'claim_behavior': '#loadClaimCohortsBtn'
+        };
+        
+        const buttonTextMap = {
+          'risk_based': '📊 Risk Cohorts',
+          'geographic': '🌍 Geographic',
+          'policy_vintage': '📅 Policy Vintage',
+          'claim_behavior': '🔧 Claim Behavior'
+        };
+        
+        const cohortBtn = el(buttonIdMap[analysisType]);
+        if (cohortBtn) {
+          cohortBtn.textContent = buttonTextMap[analysisType];
+          cohortBtn.disabled = false;
+        }
+      }
+    }
+
+    function getCohortTypeLabel(analysisType) {
+      const labels = {
+        'risk_based': 'Risk-Based Segmentation',
+        'geographic': 'Geographic Regions',
+        'policy_vintage': 'Policy Vintage Analysis',
+        'claim_behavior': 'Claim Behavior Patterns'
+      };
+      return labels[analysisType] || analysisType;
+    }
+
+    function displayCohortSegments(segments, analysisType) {
+      const segmentsGrid = el('#cohort-segments-grid');
+      
+      if (!segments || segments.length === 0) {
+        segmentsGrid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:20px; opacity:0.6;">No segments found for this analysis type.</div>';
+        return;
+      }
+
+      segmentsGrid.innerHTML = segments.map(segment => {
+        const cohortColor = getCohortColor(segment, analysisType);
+        const segmentKey = getSegmentKey(segment, analysisType);
+        const segmentLabel = getSegmentLabel(segment, analysisType);
+
+        return `
+          <div class="cohort-segment-card" 
+               style="border-color:${cohortColor}; background:linear-gradient(135deg, ${cohortColor}15, ${cohortColor}05);"
+               onclick="showCohortDetails('${segmentKey}', '${analysisType}')">
+            <div class="cohort-segment-title" style="color:${cohortColor};">${segmentLabel}</div>
+            <div class="cohort-segment-metric">
+              <span>Customers:</span>
+              <span class="cohort-segment-value">${segment.customer_count}</span>
+            </div>
+            <div class="cohort-segment-metric">
+              <span>Avg Risk:</span>
+              <span class="cohort-segment-value">${formatNumber(segment.avg_risk_score || 0)}</span>
+            </div>
+            <div class="cohort-segment-metric">
+              <span>Total Exposure:</span>
+              <span class="cohort-segment-value">${fmtMoney(segment.total_exposure || 0)}</span>
+            </div>
+            <div class="cohort-segment-metric">
+              <span>Scenarios:</span>
+              <span class="cohort-segment-value">${segment.scenarios_applied || 0}</span>
+            </div>
+            ${segment.scenario_adoption_rate ? `
+              <div class="cohort-segment-metric">
+                <span>Adoption Rate:</span>
+                <span class="cohort-segment-value">${(segment.scenario_adoption_rate * 100).toFixed(1)}%</span>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function displayCohortPerformance(performanceMetrics) {
+      const performanceGrid = el('#performance-metrics-grid');
+      
+      if (!performanceMetrics || performanceMetrics.length === 0) {
+        performanceGrid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; opacity:0.6;">Performance metrics unavailable.</div>';
+        return;
+      }
+
+      // Store performance data globally for interactive access
+      window.cohortPerformanceData = performanceMetrics;
+
+      const totalCustomers = performanceMetrics.reduce((sum, metric) => sum + parseInt(metric.total_customers || 0), 0);
+      const totalExposure = performanceMetrics.reduce((sum, metric) => sum + parseFloat(metric.total_exposure || 0), 0);
+      const avgRiskScore = (performanceMetrics.reduce((sum, m) => sum + parseFloat(m.avg_risk_score || 0), 0) / performanceMetrics.length).toFixed(1);
+      const avgScenarios = (performanceMetrics.reduce((sum, m) => sum + parseInt(m.scenarios_applied || 0), 0) / performanceMetrics.length).toFixed(1);
+
+      performanceGrid.innerHTML = `
+        <div class="performance-metric-card interactive-metric" onclick="showMetricDetails('totalCustomers')" title="Click to see customer breakdown by segment">
+          <div class="performance-metric-label">Total Customers 👆</div>
+          <div class="performance-metric-value">${totalCustomers.toLocaleString()}</div>
+          <div class="performance-metric-hint">Click for breakdown</div>
+        </div>
+        <div class="performance-metric-card interactive-metric" onclick="showMetricDetails('totalExposure')" title="Click to see exposure breakdown by segment">
+          <div class="performance-metric-label">Total Exposure 👆</div>
+          <div class="performance-metric-value">${fmtMoney(totalExposure)}</div>
+          <div class="performance-metric-hint">Click for breakdown</div>
+        </div>
+        <div class="performance-metric-card interactive-metric" onclick="showMetricDetails('avgRiskScore')" title="Click to see risk score breakdown by segment">
+          <div class="performance-metric-label">Avg Risk Score 👆</div>
+          <div class="performance-metric-value">${avgRiskScore}</div>
+          <div class="performance-metric-hint">Click for breakdown</div>
+        </div>
+        <div class="performance-metric-card interactive-metric" onclick="showMetricDetails('riskSegments')" title="Click to see all ${performanceMetrics.length} segments">
+          <div class="performance-metric-label">Risk Segments 👆</div>
+          <div class="performance-metric-value">${performanceMetrics.length}</div>
+          <div class="performance-metric-hint">Click to list all</div>
+        </div>
+        <div class="performance-metric-card interactive-metric" onclick="showMetricDetails('scenarios')" title="Click to see scenario adoption breakdown">
+          <div class="performance-metric-label">Avg Scenarios 👆</div>
+          <div class="performance-metric-value">${avgScenarios}</div>
+          <div class="performance-metric-hint">Click for breakdown</div>
+        </div>
+        <div class="performance-metric-card interactive-metric" onclick="showMetricDetails('adoptionRates')" title="Click to see adoption rate breakdown">
+          <div class="performance-metric-label">Adoption Rates 👆</div>
+          <div class="performance-metric-value">${(performanceMetrics.reduce((sum, m) => sum + parseFloat(m.scenario_adoption_rate || 0), 0) / performanceMetrics.length * 100).toFixed(1)}%</div>
+          <div class="performance-metric-hint">Click for breakdown</div>
+        </div>
+      `;
+    }
+
+    function displayMigrationAnalysis(migrationAnalysis) {
+      const migrationSummary = el('#migration-summary');
+      
+      if (!migrationAnalysis || !migrationAnalysis.migration_summary) {
+        migrationSummary.innerHTML = '<div style="opacity:0.6;">Migration analysis unavailable for selected time frame.</div>';
+        return;
+      }
+
+      const summary = migrationAnalysis.migration_summary;
+      const highActivity = migrationAnalysis.high_activity_customers || [];
+
+      migrationSummary.innerHTML = `
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; margin-bottom:8px;">
+          <div style="text-align:center;">
+            <div style="font-size:9px; opacity:0.8;">Active Customers</div>
+            <div style="font-size:11px; font-weight:600; color:#48dbfb;">${summary.total_active_customers}</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:9px; opacity:0.8;">Avg Scenarios</div>
+            <div style="font-size:11px; font-weight:600; color:#48dbfb;">${formatNumber(summary.avg_scenarios_per_customer, 1) || 0}</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:9px; opacity:0.8;">Most Active</div>
+            <div style="font-size:11px; font-weight:600; color:#48dbfb;">${summary.most_active_customer?.name || 'None'}</div>
+          </div>
+        </div>
+        ${highActivity.length > 0 ? `
+          <div style="font-size:10px; font-weight:600; margin-bottom:4px;">Top Active Customers:</div>
+          ${highActivity.slice(0, 3).map(customer => `
+            <div class="migration-item">
+              <strong>${customer.name}</strong> (${customer.state}) - ${customer.scenario_applications} scenarios
+              <div style="font-size:9px; opacity:0.8;">Risk: ${formatNumber(customer.current_risk, 1)} | Last Activity: ${new Date(customer.last_scenario_date).toLocaleDateString()}</div>
+            </div>
+          `).join('')}
+        ` : ''}
+      `;
+    }
+
+    // Interactive Performance Metrics Functions
+    function showMetricDetails(metricType) {
+      const data = window.cohortPerformanceData;
+      if (!data) {
+        alert('Performance data not available');
+        return;
+      }
+
+      let content = '';
+      let title = '';
+
+      switch(metricType) {
+        case 'totalCustomers':
+          title = '👥 Customer Breakdown by Segment';
+          content = `
+            <div style="max-height:400px; overflow-y:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                <tr style="background:rgba(72,219,251,0.2); border-bottom:1px solid rgba(255,255,255,0.3);">
+                  <th style="padding:8px; text-align:left;">Risk Segment</th>
+                  <th style="padding:8px; text-align:right;">Customers</th>
+                  <th style="padding:8px; text-align:right;">% of Total</th>
+                </tr>
+                ${data.map(segment => {
+                  const customers = parseInt(segment.total_customers || 0);
+                  const total = data.reduce((sum, s) => sum + parseInt(s.total_customers || 0), 0);
+                  const percentage = ((customers / total) * 100).toFixed(1);
+                  return `
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                      <td style="padding:8px; text-transform:capitalize;">${segment.risk_segment.replace('_', ' ')}</td>
+                      <td style="padding:8px; text-align:right; font-weight:600;">${customers.toLocaleString()}</td>
+                      <td style="padding:8px; text-align:right; color:#48dbfb;">${percentage}%</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </table>
+              <div style="margin-top:12px; padding:8px; background:rgba(255,255,255,0.05); border-radius:4px; font-size:11px;">
+                <strong>Total: ${data.reduce((sum, s) => sum + parseInt(s.total_customers || 0), 0).toLocaleString()} customers</strong>
+              </div>
+            </div>
+          `;
+          break;
+
+        case 'totalExposure':
+          title = '💰 Exposure Breakdown by Segment';
+          content = `
+            <div style="max-height:400px; overflow-y:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                <tr style="background:rgba(72,219,251,0.2); border-bottom:1px solid rgba(255,255,255,0.3);">
+                  <th style="padding:8px; text-align:left;">Risk Segment</th>
+                  <th style="padding:8px; text-align:right;">Total Exposure</th>
+                  <th style="padding:8px; text-align:right;">Per Customer</th>
+                  <th style="padding:8px; text-align:right;">% of Total</th>
+                </tr>
+                ${data.map(segment => {
+                  const exposure = parseFloat(segment.total_exposure || 0);
+                  const customers = parseInt(segment.total_customers || 0);
+                  const perCustomer = customers > 0 ? exposure / customers : 0;
+                  const total = data.reduce((sum, s) => sum + parseFloat(s.total_exposure || 0), 0);
+                  const percentage = total > 0 ? ((exposure / total) * 100).toFixed(1) : '0.0';
+                  return `
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                      <td style="padding:8px; text-transform:capitalize;">${segment.risk_segment.replace('_', ' ')}</td>
+                      <td style="padding:8px; text-align:right; font-weight:600;">${fmtMoney(exposure)}</td>
+                      <td style="padding:8px; text-align:right;">${fmtMoney(perCustomer)}</td>
+                      <td style="padding:8px; text-align:right; color:#48dbfb;">${percentage}%</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </table>
+              <div style="margin-top:12px; padding:8px; background:rgba(255,255,255,0.05); border-radius:4px; font-size:11px;">
+                <strong>Total: ${fmtMoney(data.reduce((sum, s) => sum + parseFloat(s.total_exposure || 0), 0))}</strong>
+              </div>
+            </div>
+          `;
+          break;
+
+        case 'avgRiskScore':
+          title = '📊 Risk Score Breakdown by Segment';
+          content = `
+            <div style="max-height:400px; overflow-y:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                <tr style="background:rgba(72,219,251,0.2); border-bottom:1px solid rgba(255,255,255,0.3);">
+                  <th style="padding:8px; text-align:left;">Risk Segment</th>
+                  <th style="padding:8px; text-align:right;">Avg Risk Score</th>
+                  <th style="padding:8px; text-align:right;">Customers</th>
+                  <th style="padding:8px; text-align:right;">Weight</th>
+                </tr>
+                ${data.map(segment => {
+                  const avgRisk = parseFloat(segment.avg_risk_score || 0);
+                  const customers = parseInt(segment.total_customers || 0);
+                  const totalCustomers = data.reduce((sum, s) => sum + parseInt(s.total_customers || 0), 0);
+                  const weight = totalCustomers > 0 ? ((customers / totalCustomers) * 100).toFixed(1) : '0.0';
+                  return `
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                      <td style="padding:8px; text-transform:capitalize;">${segment.risk_segment.replace('_', ' ')}</td>
+                      <td style="padding:8px; text-align:right; font-weight:600; color:${avgRisk >= 80 ? '#F44336' : avgRisk >= 60 ? '#FF9800' : '#4CAF50'};">${formatNumber(avgRisk)}</td>
+                      <td style="padding:8px; text-align:right;">${customers}</td>
+                      <td style="padding:8px; text-align:right; color:#48dbfb;">${weight}%</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </table>
+              <div style="margin-top:12px; padding:8px; background:rgba(255,255,255,0.05); border-radius:4px; font-size:11px;">
+                <strong>Portfolio Average: ${formatNumber(data.reduce((sum, s) => sum + parseFloat(s.avg_risk_score || 0) * parseInt(s.total_customers || 0), 0) / data.reduce((sum, s) => sum + parseInt(s.total_customers || 0), 0))}</strong>
+              </div>
+            </div>
+          `;
+          break;
+
+        case 'riskSegments':
+          title = '🎯 All Risk Segments Details';
+          content = `
+            <div style="max-height:400px; overflow-y:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:11px;">
+                <tr style="background:rgba(72,219,251,0.2); border-bottom:1px solid rgba(255,255,255,0.3);">
+                  <th style="padding:6px; text-align:left;">Segment</th>
+                  <th style="padding:6px; text-align:right;">Customers</th>
+                  <th style="padding:6px; text-align:right;">Avg Risk</th>
+                  <th style="padding:6px; text-align:right;">Exposure</th>
+                  <th style="padding:6px; text-align:right;">Scenarios</th>
+                </tr>
+                ${data.map((segment, index) => {
+                  return `
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                      <td style="padding:6px; text-transform:capitalize; font-weight:600;">${index + 1}. ${segment.risk_segment.replace('_', ' ')}</td>
+                      <td style="padding:6px; text-align:right;">${parseInt(segment.total_customers || 0)}</td>
+                      <td style="padding:6px; text-align:right; color:${parseFloat(segment.avg_risk_score || 0) >= 80 ? '#F44336' : parseFloat(segment.avg_risk_score || 0) >= 60 ? '#FF9800' : '#4CAF50'};">${parseFloat(segment.avg_risk_score || 0).toFixed(1)}</td>
+                      <td style="padding:6px; text-align:right;">${fmtMoney(parseFloat(segment.total_exposure || 0))}</td>
+                      <td style="padding:6px; text-align:right; color:#48dbfb;">${parseInt(segment.scenarios_applied || 0)}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </table>
+            </div>
+          `;
+          break;
+
+        case 'scenarios':
+          title = '🎬 Scenario Application Breakdown';
+          content = `
+            <div style="max-height:400px; overflow-y:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                <tr style="background:rgba(72,219,251,0.2); border-bottom:1px solid rgba(255,255,255,0.3);">
+                  <th style="padding:8px; text-align:left;">Risk Segment</th>
+                  <th style="padding:8px; text-align:right;">Total Scenarios</th>
+                  <th style="padding:8px; text-align:right;">Per Customer</th>
+                  <th style="padding:8px; text-align:right;">Adoption Rate</th>
+                </tr>
+                ${data.map(segment => {
+                  const scenarios = parseInt(segment.scenarios_applied || 0);
+                  const customers = parseInt(segment.total_customers || 0);
+                  const perCustomer = customers > 0 ? (scenarios / customers).toFixed(1) : '0.0';
+                  const adoptionRate = parseFloat(segment.scenario_adoption_rate || 0) * 100;
+                  return `
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                      <td style="padding:8px; text-transform:capitalize;">${segment.risk_segment.replace('_', ' ')}</td>
+                      <td style="padding:8px; text-align:right; font-weight:600;">${scenarios}</td>
+                      <td style="padding:8px; text-align:right;">${perCustomer}</td>
+                      <td style="padding:8px; text-align:right; color:#48dbfb;">${adoptionRate.toFixed(1)}%</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </table>
+              <div style="margin-top:12px; padding:8px; background:rgba(255,255,255,0.05); border-radius:4px; font-size:11px;">
+                <strong>Total Scenarios: ${data.reduce((sum, s) => sum + parseInt(s.scenarios_applied || 0), 0)}</strong>
+              </div>
+            </div>
+          `;
+          break;
+
+        case 'adoptionRates':
+          title = '📈 Adoption Rate Analysis';
+          content = `
+            <div style="max-height:400px; overflow-y:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                <tr style="background:rgba(72,219,251,0.2); border-bottom:1px solid rgba(255,255,255,0.3);">
+                  <th style="padding:8px; text-align:left;">Risk Segment</th>
+                  <th style="padding:8px; text-align:right;">Adoption Rate</th>
+                  <th style="padding:8px; text-align:right;">Active Customers</th>
+                  <th style="padding:8px; text-align:right;">Total Customers</th>
+                </tr>
+                ${data.map(segment => {
+                  const adoptionRate = parseFloat(segment.scenario_adoption_rate || 0) * 100;
+                  const totalCustomers = parseInt(segment.total_customers || 0);
+                  const activeCustomers = Math.round(totalCustomers * parseFloat(segment.scenario_adoption_rate || 0));
+                  return `
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                      <td style="padding:8px; text-transform:capitalize;">${segment.risk_segment.replace('_', ' ')}</td>
+                      <td style="padding:8px; text-align:right; font-weight:600; color:${adoptionRate >= 50 ? '#4CAF50' : adoptionRate >= 25 ? '#FF9800' : '#F44336'};">${adoptionRate.toFixed(1)}%</td>
+                      <td style="padding:8px; text-align:right;">${activeCustomers}</td>
+                      <td style="padding:8px; text-align:right; color:#48dbfb;">${totalCustomers}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </table>
+              <div style="margin-top:12px; padding:8px; background:rgba(255,255,255,0.05); border-radius:4px; font-size:11px;">
+                <strong>Portfolio Average: ${(data.reduce((sum, s) => sum + parseFloat(s.scenario_adoption_rate || 0) * parseInt(s.total_customers || 0), 0) / data.reduce((sum, s) => sum + parseInt(s.total_customers || 0), 0) * 100).toFixed(1)}%</strong>
+              </div>
+            </div>
+          `;
+          break;
+      }
+
+      showModal(title, content);
+    }
+
+    function showModal(title, content) {
+      // Remove existing modal if any
+      const existingModal = document.getElementById('metric-modal');
+      if (existingModal) {
+        existingModal.remove();
+      }
+
+      // Create modal
+      const modal = document.createElement('div');
+      modal.id = 'metric-modal';
+      modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        animation: fadeIn 0.3s ease;
+      `;
+
+      modal.innerHTML = `
+        <div style="
+          background: linear-gradient(135deg, #1a1a2e, #16213e);
+          border-radius: 12px;
+          padding: 20px;
+          max-width: 80vw;
+          max-height: 80vh;
+          overflow: hidden;
+          border: 2px solid #48dbfb;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        ">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0; color: #48dbfb; font-size: 16px;">${title}</h3>
+            <button onclick="closeModal()" style="
+              background: #F44336;
+              border: none;
+              color: white;
+              width: 25px;
+              height: 25px;
+              border-radius: 50%;
+              cursor: pointer;
+              font-size: 14px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            ">×</button>
+          </div>
+          <div style="color: #ffffff;">
+            ${content}
+          </div>
+        </div>
+      `;
+
+      // Add fadeIn animation
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes fadeIn {
+          from { opacity: 0; transform: scale(0.9); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `;
+      document.head.appendChild(style);
+
+      // Close on background click
+      modal.onclick = (e) => {
+        if (e.target === modal) {
+          closeModal();
+        }
+      };
+
+      document.body.appendChild(modal);
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('metric-modal');
+      if (modal) {
+        modal.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => modal.remove(), 300);
+      }
+    }
+
+    function getCohortColor(segment, analysisType) {
+      if (analysisType === 'risk_based') {
+        const risk = parseFloat(segment.avg_risk_score || 0);
+        if (risk >= 80) return '#F44336';
+        if (risk >= 65) return '#FF9800';
+        if (risk >= 45) return '#FFC107';
+        if (risk >= 25) return '#8BC34A';
+        return '#4CAF50';
+      } else if (analysisType === 'geographic') {
+        return ['#2196F3', '#9C27B0', '#FF5722', '#795548', '#607D8B'][Math.floor(Math.random() * 5)];
+      } else if (analysisType === 'policy_vintage') {
+        const colors = { 'new_customers': '#4CAF50', 'established': '#2196F3', 'mature': '#FF9800', 'legacy': '#9E9E9E' };
+        return colors[getSegmentKey(segment, analysisType)] || '#48dbfb';
+      } else if (analysisType === 'claim_behavior') {
+        const colors = { 'claim_free': '#4CAF50', 'single_claim': '#FF9800', 'multiple_claims': '#F44336' };
+        return colors[getSegmentKey(segment, analysisType)] || '#48dbfb';
+      }
+      return '#48dbfb';
+    }
+
+    function getSegmentKey(segment, analysisType) {
+      if (analysisType === 'risk_based') return segment.risk_cohort;
+      if (analysisType === 'geographic') return segment.cohort_key || segment.state || segment.region_name;
+      if (analysisType === 'policy_vintage') return segment.vintage_cohort;
+      if (analysisType === 'claim_behavior') return segment.claim_cohort;
+      return 'unknown';
+    }
+
+    function getSegmentLabel(segment, analysisType) {
+      if (analysisType === 'risk_based') {
+        const labels = {
+          'ultra_low': 'Ultra Low (0-25)',
+          'low': 'Low (25-45)',
+          'moderate': 'Moderate (45-65)',
+          'high': 'High (65-80)',
+          'critical': 'Critical (80+)'
+        };
+        return labels[segment.risk_cohort] || segment.risk_cohort;
+      } else if (analysisType === 'geographic') {
+        return segment.region_name || segment.state || 'Unknown Region';
+      } else if (analysisType === 'policy_vintage') {
+        const labels = {
+          'new_customers': 'New (0-6 months)',
+          'established': 'Established (6-24 months)',
+          'mature': 'Mature (2-5 years)',
+          'legacy': 'Legacy (5+ years)'
+        };
+        return labels[segment.vintage_cohort] || segment.vintage_cohort;
+      } else if (analysisType === 'claim_behavior') {
+        const labels = {
+          'claim_free': 'Claim-Free',
+          'single_claim': 'Single Claim',
+          'multiple_claims': 'Multiple Claims'
+        };
+        return labels[segment.claim_cohort] || segment.claim_cohort;
+      }
+      return 'Unknown Segment';
+    }
+
+    async function showCohortDetails(segmentKey, analysisType) {
+      try {
+        // Add cache-busting to prevent stale segment data
+        const cacheBuster = Date.now();
+        const url = `${API}/api/cohort/segments/${analysisType}?_cb=${cacheBuster}`;
+        
+        const response = await fetch(url, {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const segmentData = await response.json();
+        
+        const segment = segmentData.segments.find(s => getSegmentKey(s, analysisType) === segmentKey);
+        if (!segment) {
+          alert('Segment details not found.');
+          return;
+        }
+
+        let detailText = `👥 ${getSegmentLabel(segment, analysisType)} Details\n\n`;
+        detailText += `📊 Segment Overview:\n`;
+        detailText += `• Customer Count: ${segment.customer_count}\n`;
+        detailText += `• Average Risk Score: ${parseFloat(segment.avg_risk_score || 0).toFixed(1)}\n`;
+        detailText += `• Total Exposure: ${fmtMoney(segment.total_exposure || 0)}\n`;
+        detailText += `• Scenarios Applied: ${segment.scenarios_applied || 0}\n`;
+        
+        if (segment.scenario_adoption_rate) {
+          detailText += `• Adoption Rate: ${(segment.scenario_adoption_rate * 100).toFixed(1)}%\n`;
+        }
+        
+        if (segment.risk_per_customer) {
+          detailText += `• Risk per Customer: ${fmtMoney(segment.risk_per_customer)}\n`;
+        }
+
+        if (analysisType === 'geographic' && segment.states) {
+          detailText += `\n🗺️ States Included:\n`;
+          segment.states.forEach(state => {
+            detailText += `• ${state}\n`;
+          });
+        }
+
+        if (segment.states_represented && Array.isArray(segment.states_represented)) {
+          detailText += `\n🌍 Geographic Distribution:\n`;
+          segment.states_represented.slice(0, 5).forEach(state => {
+            detailText += `• ${state}\n`;
+          });
+          if (segment.states_represented.length > 5) {
+            detailText += `• ... and ${segment.states_represented.length - 5} more states\n`;
+          }
+        }
+
+        alert(detailText);
+
+      } catch (error) {
+        console.error('Cohort Details Error:', error);
+        alert('Error loading cohort details: ' + error.message);
+      }
+    }
+
+    // Heat Map Functions
+    async function loadRiskHeatMap() {
+      try {
+        const heatMapBtn = el('#loadHeatMapBtn');
+        const originalText = heatMapBtn.textContent;
+        heatMapBtn.textContent = '🔥 Loading...';
+        heatMapBtn.disabled = true;
+
+        const response = await fetch(`${API}/api/heatmap/geographic`);
+        const heatMapData = await response.json();
+
+        // Show heat map container
+        el('#heat-map-container').style.display = 'block';
+
+        // Update legend
+        displayHeatMapLegend(heatMapData.legend);
+
+        // Display heat map states
+        displayHeatMapStates(heatMapData.state_details);
+
+        // Update stats
+        updateHeatMapStats(heatMapData.portfolio_statistics);
+
+        // Show success message
+        alert(`🗺️ Heat Map Loaded!\n\nStates with Data: ${heatMapData.portfolio_statistics.total_states}\nAverage Portfolio Risk: ${heatMapData.portfolio_statistics.avg_portfolio_risk}\nHighest Risk: ${heatMapData.portfolio_statistics.highest_risk_state?.name} (${heatMapData.portfolio_statistics.highest_risk_state?.risk_score})`);
+
+      } catch (error) {
+        console.error('Heat Map Loading Error:', error);
+        alert('Error loading heat map: ' + error.message);
+      } finally {
+        const heatMapBtn = el('#loadHeatMapBtn');
+        heatMapBtn.textContent = '🔥 Load Heat Map';
+        heatMapBtn.disabled = false;
+      }
+    }
+
+    async function loadActivityHeatMap() {
+      try {
+        const activityBtn = el('#heatMapActivityBtn');
+        const timeFrame = el('#heatMapTimeFrame').value;
+        const originalText = activityBtn.textContent;
+        activityBtn.textContent = '📊 Loading...';
+        activityBtn.disabled = true;
+
+        const response = await fetch(`${API}/api/heatmap/activity?timeFrame=${timeFrame}`);
+        const activityData = await response.json();
+
+        // Show heat map container
+        el('#heat-map-container').style.display = 'block';
+
+        // Display activity heat map
+        displayActivityHeatMap(activityData.activity_heat_map);
+
+        alert(`📊 Activity Heat Map Loaded!\n\nTime Frame: ${activityData.time_frame}\nActive States: ${activityData.activity_heat_map.length}\nMost Active: ${activityData.activity_heat_map[0]?.state_name || 'None'} (${activityData.activity_heat_map[0]?.scenario_count || 0} scenarios)`);
+
+      } catch (error) {
+        console.error('Activity Heat Map Error:', error);
+        alert('Error loading activity heat map: ' + error.message);
+      } finally {
+        const activityBtn = el('#heatMapActivityBtn');
+        activityBtn.textContent = '📊 Activity View';
+        activityBtn.disabled = false;
+      }
+    }
+
+    function displayHeatMapLegend(legend) {
+      const legendItems = el('#legend-items');
+      legendItems.innerHTML = Object.entries(legend).map(([key, info]) => `
+        <div class="legend-item">
+          <div class="legend-color" style="background:${info.color};"></div>
+          <span>${info.label}</span>
+        </div>
+      `).join('');
+    }
+
+    function displayHeatMapStates(stateDetails) {
+      const heatMapGrid = el('#heat-map-grid');
+      
+      // Filter out states with no data and sort by risk score
+      const statesWithData = Object.values(stateDetails)
+        .filter(state => state.customer_count > 0)
+        .sort((a, b) => b.avg_risk_score - a.avg_risk_score);
+
+      heatMapGrid.innerHTML = statesWithData.map(state => `
+        <div class="heat-map-state-card" 
+             style="border-color:${state.color}; background:linear-gradient(135deg, ${state.color}20, ${state.color}10);"
+             onclick="showStateDetails('${state.state_code}')">
+          <div class="heat-map-state-name">${state.state_code}</div>
+          <div class="heat-map-state-risk" style="color:${state.color};">${formatNumber(state.avg_risk_score)}</div>
+          <div class="heat-map-state-customers">${state.customer_count} customers</div>
+          <div style="font-size:8px; margin-top:2px;">${fmtMoney(state.total_exposure)}</div>
+        </div>
+      `).join('');
+    }
+
+    function displayActivityHeatMap(activityData) {
+      const heatMapGrid = el('#heat-map-grid');
+      
+      // Clear legend for activity view
+      el('#legend-items').innerHTML = `
+        <div class="legend-item">
+          <div class="legend-color" style="background:#4CAF50;"></div>
+          <span>Low Activity (1-4)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background:#FF9800;"></div>
+          <span>Medium Activity (5-9)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background:#F44336;"></div>
+          <span>High Activity (10+)</span>
+        </div>
+      `;
+
+      heatMapGrid.innerHTML = activityData.map(state => {
+        const activityColor = state.scenario_count >= 10 ? '#F44336' : 
+                             state.scenario_count >= 5 ? '#FF9800' : '#4CAF50';
+        return `
+          <div class="heat-map-state-card" 
+               style="border-color:${activityColor}; background:linear-gradient(135deg, ${activityColor}20, ${activityColor}10);"
+               onclick="showStateDetails('${state.state_code}')">
+            <div class="heat-map-state-name">${state.state_code}</div>
+            <div class="heat-map-state-risk" style="color:${activityColor};">${state.scenario_count}</div>
+            <div class="heat-map-state-customers">${state.active_customers} active</div>
+            <div style="font-size:8px; margin-top:2px;">Avg Risk: ${formatNumber(state.avg_risk_score)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateHeatMapStats(stats) {
+      console.log('updateHeatMapStats called with:', stats);
+      
+      try {
+        const totalStatesEl = el('#hm-total-states');
+        const avgRiskEl = el('#hm-avg-risk');
+        const highestRiskEl = el('#hm-highest-risk');
+        const mostCustomersEl = el('#hm-most-customers');
+        
+        if (!totalStatesEl) console.error('Element #hm-total-states not found');
+        if (!avgRiskEl) console.error('Element #hm-avg-risk not found');
+        if (!highestRiskEl) console.error('Element #hm-highest-risk not found');
+        if (!mostCustomersEl) console.error('Element #hm-most-customers not found');
+        
+        if (totalStatesEl) totalStatesEl.textContent = stats.total_states || '-';
+        if (avgRiskEl) avgRiskEl.textContent = formatNumber(stats.avg_portfolio_risk) || '-';
+        if (highestRiskEl) {
+          highestRiskEl.textContent = stats.highest_risk_state ? 
+            `${stats.highest_risk_state.state} (${formatNumber(stats.highest_risk_state.risk_score)})` : '-';
+        }
+        if (mostCustomersEl) {
+          mostCustomersEl.textContent = stats.most_customers_state ? 
+            `${stats.most_customers_state.state} (${stats.most_customers_state.customer_count})` : '-';
+        }
+        
+        console.log('Heat map stats updated successfully');
+      } catch (error) {
+        console.error('Error updating heat map stats:', error);
+      }
+    }
+
+    // Utility function to format numbers consistently (max 2 decimal places)
+    function formatNumber(value, maxDecimals = 2) {
+      if (value == null || isNaN(value)) return '-';
+      const num = parseFloat(value);
+      if (num % 1 === 0) return num.toString(); // No decimals if whole number
+      return num.toFixed(Math.min(maxDecimals, (num.toString().split('.')[1] || '').length));
+    }
+
+    async function showStateDetails(stateCode) {
+      try {
+        const response = await fetch(`${API}/api/heatmap/state/${stateCode}`);
+        const stateData = await response.json();
+
+        const stats = stateData.statistics;
+        let detailText = `🏛️ ${stateData.state_name} (${stateCode}) Analysis\n\n`;
+        detailText += `📊 Portfolio Overview:\n`;
+        detailText += `• Total Customers: ${stats.total_customers}\n`;
+        detailText += `• Average Risk Score: ${stats.avg_risk_score.toFixed(1)}\n`;
+        detailText += `• Total Exposure: ${fmtMoney(stats.total_exposure)}\n\n`;
+        
+        detailText += `🎯 Risk Distribution:\n`;
+        Object.entries(stats.risk_distribution).forEach(([tier, count]) => {
+          if (count > 0) {
+            detailText += `• ${tier}: ${count} customers\n`;
+          }
+        });
+
+        if (stats.top_cities.length > 0) {
+          detailText += `\n🏙️ Top Cities by Risk:\n`;
+          stats.top_cities.slice(0, 3).forEach(city => {
+            detailText += `• ${city.city}: ${city.avg_risk} avg risk (${city.customer_count} customers)\n`;
+          });
+        }
+
+        alert(detailText);
+
+      } catch (error) {
+        console.error('State Details Error:', error);
+        alert(`Error loading details for ${stateCode}: ` + error.message);
+      }
+    }
+
+    // ML Risk Analysis Functions
+    async function recalculateRiskWithAI() {
+      if (!currentId || !currentTwin) return;
+      
+      const mlBtn = el('#mlRecalculateBtn');
+      const originalText = mlBtn.textContent;
+      mlBtn.textContent = '🤖 Analyzing...';
+      mlBtn.disabled = true;
+      
+      try {
+        const response = await fetch(`${API}/api/risk/recalculate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customer_id: currentId })
+        });
+        
+        const result = await response.json();
+        
+        // Display ML results
+        const resultsDiv = el('#ml-results');
+        resultsDiv.style.display = 'block';
+        
+        // Update score comparison
+        el('#ml-original-score').textContent = result.risk_calculation.original_score.toFixed(1);
+        el('#ml-new-score').textContent = result.risk_calculation.new_score.toFixed(1);
+        
+        const adjustment = result.risk_calculation.adjustment;
+        el('#ml-adjustment').textContent = (adjustment > 0 ? '+' : '') + adjustment.toFixed(1);
+        el('#ml-adjustment').style.color = adjustment > 0 ? '#ff6b6b' : '#48dbfb';
+        
+        // Update metadata
+        el('#ml-model-version').textContent = result.risk_calculation.model_version;
+        el('#ml-confidence').textContent = (result.risk_calculation.confidence * 100).toFixed(1) + '%';
+        el('#ml-updated').textContent = new Date(result.updated_at).toLocaleTimeString();
+        
+        // Update factors
+        const factors = result.risk_calculation.factors;
+        el('#factor-weather').textContent = factors.weather > 0 ? '+' + factors.weather.toFixed(1) : factors.weather.toFixed(1);
+        el('#factor-economic').textContent = factors.economic > 0 ? '+' + factors.economic.toFixed(1) : factors.economic.toFixed(1);
+        el('#factor-traffic').textContent = factors.traffic > 0 ? '+' + factors.traffic.toFixed(1) : factors.traffic.toFixed(1);
+        el('#factor-market').textContent = factors.market > 0 ? '+' + factors.market.toFixed(1) : factors.market.toFixed(1);
+        el('#factor-temporal').textContent = factors.temporal > 0 ? '+' + factors.temporal.toFixed(1) : factors.temporal.toFixed(1);
+        
+        // Color code factors
+        Object.keys(factors).forEach(factor => {
+          const element = el(`#factor-${factor}`);
+          const value = factors[factor];
+          if (value > 1) element.style.color = '#ff6b6b';
+          else if (value < -1) element.style.color = '#48dbfb';
+          else element.style.color = '#feca57';
+        });
+        
+        // Refresh timeline to show ML update event
+        await loadTwin(currentId, false);
+        
+        // Show success message
+        alert(`AI Risk Analysis Complete!\n\nRisk Score: ${result.risk_calculation.original_score} → ${result.risk_calculation.new_score}\nModel Confidence: ${(result.risk_calculation.confidence * 100).toFixed(1)}%`);
+        
+      } catch (error) {
+        console.error('ML Recalculation Error:', error);
+        alert('Error during AI analysis: ' + error.message);
+      } finally {
+        mlBtn.textContent = originalText;
+        mlBtn.disabled = false;
+      }
+    }
+
+    async function viewRiskTrend() {
+      if (!currentId) return;
+      
+      const trendBtn = el('#mlTrendBtn');
+      const originalText = trendBtn.textContent;
+      trendBtn.textContent = '📊 Loading...';
+      trendBtn.disabled = true;
+      
+      try {
+        const response = await fetch(`${API}/api/risk/trend/${currentId}?days=30`);
+        const trendData = await response.json();
+        
+        // Create a simple trend visualization (in a real app, you'd use Chart.js or similar)
+        const trendPoints = trendData.data_points;
+        const minScore = Math.min(...trendPoints.map(p => p.risk_score));
+        const maxScore = Math.max(...trendPoints.map(p => p.risk_score));
+        const currentScore = trendPoints[trendPoints.length - 1].risk_score;
+        const firstScore = trendPoints[0].risk_score;
+        
+        const trendDirection = currentScore > firstScore ? '📈 Increasing' : '📉 Decreasing';
+        const trendColor = currentScore > firstScore ? '#ff6b6b' : '#48dbfb';
+        
+        alert(`📊 30-Day Risk Trend Analysis\n\n` +
+              `Current Score: ${currentScore}\n` +
+              `Range: ${minScore.toFixed(1)} - ${maxScore.toFixed(1)}\n` +
+              `Trend: ${trendDirection}\n` +
+              `Volatility: ${trendData.volatility}\n` +
+              `Confidence: ${(trendData.prediction_confidence * 100).toFixed(1)}%\n\n` +
+              `Data points: ${trendData.data_points.length} over ${trendData.trend_period}`);
+        
+      } catch (error) {
+        console.error('Trend Analysis Error:', error);
+        alert('Error loading risk trend: ' + error.message);
+      } finally {
+        trendBtn.textContent = originalText;
+        trendBtn.disabled = false;
+      }
+    }
+
+    // events
+    el('#loadBtn').onclick = loadLeaderboard;
+    el('#applyBtn').onclick = applyScenario;
+    el('#mlRecalculateBtn').onclick = recalculateRiskWithAI;
+    el('#mlTrendBtn').onclick = viewRiskTrend;
+    
+    // Portfolio Analytics Events
+    el('#portfolioBtn').onclick = loadPortfolioAnalytics;
+    el('#refreshPortfolioBtn').onclick = loadPortfolioAnalytics;
+    el('#portfolioTrendsBtn').onclick = showPortfolioTrends;
+    el('#portfolioAlertsBtn').onclick = showDetailedAlerts;
+    el('#backToLeaderboardBtn').onclick = backToLeaderboard;
+    
+    // Heat Map Events
+    el('#loadHeatMapBtn').onclick = loadRiskHeatMap;
+    el('#heatMapActivityBtn').onclick = loadActivityHeatMap;
+    
+    // Storyboard Refresh Event
+    el('#refreshTimelineBtn').onclick = async function() {
+      if (currentId) {
+        const btn = this;
+        const originalText = btn.textContent;
+        btn.textContent = '⏳';
+        btn.disabled = true;
+        
+        try {
+          // Show loading state
+          const tl = el('#timeline');
+          tl.innerHTML = '<div class="titem"><div class="dot" style="background-color: #48dbfb;"></div><div><div style="color: #48dbfb; font-weight: 600;">🔄 Refreshing Storyboard...</div><div class="tcap">Reloading timeline events...</div></div></div>';
+          
+          // Refresh timeline without animation
+          const timeRes = await fetch(`${API}/api/timeline/${currentId}`);
+          const timelineData = await timeRes.json();
+          const timeline = Array.isArray(timelineData) ? timelineData : [];
+          
+          // Clear and repopulate timeline
+          tl.innerHTML = '';
+          
+          // Handle empty timeline case or invalid timeline data
+          if (!timeline || !Array.isArray(timeline) || timeline.length === 0) {
+            const emptyRow = document.createElement('div');
+            emptyRow.className = 'titem';
+            emptyRow.innerHTML = `
+              <div class="dot" style="background-color: #ffa726;"></div>
+              <div>
+                <div style="color: #ffa726; font-weight: 600;">📝 No Timeline Events Available</div>
+                <div class="tcap">This customer doesn't have any recorded events yet. Timeline will populate as scenarios are applied and activities occur. <span class="ok">#new-customer</span></div>
+              </div>`;
+            tl.appendChild(emptyRow);
+          } else {
+            // Repopulate timeline with current data
+            timeline.forEach(ev => {
+              const row = document.createElement('div');
+              row.className = 'titem';
+              const eventDate = new Date(ev.event_ts);
+              const dateStr = eventDate.toLocaleDateString();
+              const timeStr = eventDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second: '2-digit'});
+              const relativeTime = getRelativeTime(eventDate);
+              
+              const isScenario = ev.tag === 'scenario';
+              const timestampDisplay = isScenario 
+                ? `<span class="scenario-timestamp">📅 ${dateStr} ⏰ ${timeStr}</span>` 
+                : `<b>${dateStr} at ${timeStr}</b>`;
+              
+              let enhancedDetails = ev.details.replace(/\$(\d+(?:,\d{3})*)/g, '<span class="amount-highlight">$$$1</span>');
+              
+              row.innerHTML = `
+                <div class="dot ${isScenario ? 'scenario-dot' : ''}"></div>
+                <div>
+                  <div>${timestampDisplay} – ${ev.title}</div>
+                  <div class="tcap">${enhancedDetails} <span class="time-ago">${relativeTime}</span> <span class="${/claim|risk/i.test(ev.tag)?'warn':'ok'}">#${ev.tag}</span></div>
+                </div>`;
+              tl.appendChild(row);
+            });
+          }
+          
+          console.log(`Storyboard refreshed for customer ${currentId}`);
+        } catch (error) {
+          console.error('Error refreshing storyboard:', error);
+          alert('Failed to refresh storyboard: ' + error.message);
+        } finally {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
+      } else {
+        alert('No customer selected. Please select a customer first.');
+      }
+    };
+    
+    // Cohort Analysis Events
+    el('#loadRiskCohortsBtn').onclick = () => loadCohortAnalysis('risk_based');
+    el('#loadGeoCohortsBtn').onclick = () => loadCohortAnalysis('geographic');
+    el('#loadVintageCohortsBtn').onclick = () => loadCohortAnalysis('policy_vintage');
+    el('#loadClaimCohortsBtn').onclick = () => loadCohortAnalysis('claim_behavior');
+
+    // initial load
+    loadLeaderboard();
+  </script>
+</body>
+</html>
