@@ -1759,11 +1759,10 @@ Would you like to download a PDF report of these results?`;
         };
       };
 
-      let data = Array.isArray(performanceData) && performanceData.length > 0 && (
-        'total_customers' in performanceData[0] || 'avg_risk_score' in performanceData[0] || 'scenarios_applied' in performanceData[0]
-      )
-        ? performanceData.map(normalize)
-        : segmentsData.map(normalize);
+      // Prefer segment-level data because it contains proper labels; fallback to performance data only if segments are missing
+      let data = (Array.isArray(segmentsData) && segmentsData.length > 0)
+        ? segmentsData.map(normalize)
+        : (Array.isArray(performanceData) ? performanceData.map(normalize) : []);
 
       if (!data || data.length === 0) {
         alert('Performance data not available');
