@@ -1,0 +1,24 @@
+[build]
+builder = "nixpacks"
+buildCommand = "npm install"
+
+[deploy]
+startCommand = "node scripts/start_risktwin.js"
+healthcheckPath = "/"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+
+[environment]
+NODE_ENV = "production"
+PORT = "$PORT"
+
+[[services]]
+name = "risktwin-api"
+source = "."
+
+[services.build]
+builder = "nixpacks"
+buildCommand = "npm install"
+
+[services.deploy]
+startCommand = "node scripts/start_risktwin.js" 

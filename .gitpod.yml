@@ -1,0 +1,22 @@
+image: gitpod/workspace-node:latest
+
+ports:
+  - port: 3000
+    onOpen: open-browser
+    name: RiskTwin Dashboard
+    description: AI-powered Insurance Risk Analytics Platform
+
+tasks:
+  - name: Setup RiskTwin
+    init: |
+      npm install
+      echo "✅ Dependencies installed"
+    command: |
+      echo "🌟 Starting RiskTwin Platform..."
+      node scripts/start_risktwin.js
+
+vscode:
+  extensions:
+    - ms-vscode.vscode-json
+    - bradlc.vscode-tailwindcss
+    - esbenp.prettier-vscode 

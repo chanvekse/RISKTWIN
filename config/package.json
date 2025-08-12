@@ -4,8 +4,8 @@
   "main": "query_risk.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node ../backend/server.js",
-    "dev": "node ../backend/server.js"
+    "start": "node scripts/start_risktwin.js",
+    "dev": "node scripts/start_risktwin.js"
   },
   "keywords": [],
   "author": "",

@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: risktwin-dashboard
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node scripts/start_risktwin.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        fromService:
+          type: web
+          name: risktwin-dashboard
+          property: port
+    domains:
+      - risktwin.onrender.com
+
+databases:
+  - name: risktwin-postgres
+    databaseName: risktwin
+    user: risktwin
+    plan: free
+    region: oregon 

@@ -1601,6 +1601,10 @@ Would you like to download a PDF report of these results?`;
     function displayCohortSegments(segments, analysisType) {
       const segmentsGrid = el('#cohort-segments-grid');
       
+      // persist latest segments and analysis type for breakdowns
+      window.cohortSegmentsData = Array.isArray(segments) ? segments : [];
+      window.cohortAnalysisType = analysisType;
+      
       if (!segments || segments.length === 0) {
         segmentsGrid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:20px; opacity:0.6;">No segments found for this analysis type.</div>';
         return;
@@ -1733,8 +1737,29 @@ Would you like to download a PDF report of these results?`;
 
     // Interactive Performance Metrics Functions
     function showMetricDetails(metricType) {
-      const data = window.cohortPerformanceData;
-      if (!data) {
+      const performanceData = window.cohortPerformanceData;
+      const segmentsData = window.cohortSegmentsData || [];
+      const analysisType = window.cohortAnalysisType || 'risk_based';
+
+      // Normalize data to a common shape for breakdowns
+      const normalize = (item) => ({
+        label: (item.risk_segment || item.segment || item.region_name || item.cohort_key || item.vintage_cohort || item.claim_cohort || 'segment'),
+        total_customers: parseInt(item.total_customers ?? item.customer_count ?? 0),
+        total_exposure: parseFloat(item.total_exposure ?? 0),
+        avg_risk_score: parseFloat(item.avg_risk_score ?? 0),
+        scenarios_applied: parseInt(item.scenarios_applied ?? 0),
+        scenario_adoption_rate: (typeof item.scenario_adoption_rate === 'string'
+          ? parseFloat(item.scenario_adoption_rate) / 100
+          : parseFloat(item.scenario_adoption_rate ?? 0))
+      });
+
+      let data = Array.isArray(performanceData) && performanceData.length > 0 && (
+        'total_customers' in performanceData[0] || 'avg_risk_score' in performanceData[0] || 'scenarios_applied' in performanceData[0]
+      )
+        ? performanceData.map(normalize)
+        : segmentsData.map(normalize);
+
+      if (!data || data.length === 0) {
         alert('Performance data not available');
         return;
       }
@@ -1749,17 +1774,17 @@ Would you like to download a PDF report of these results?`;
             <div style="max-height:400px; overflow-y:auto;">
               <table style="width:100%; border-collapse:collapse; font-size:12px;">
                 <tr style="background:rgba(72,219,251,0.2); border-bottom:1px solid rgba(255,255,255,0.3);">
-                  <th style="padding:8px; text-align:left;">Risk Segment</th>
+                  <th style="padding:8px; text-align:left;">Segment</th>
                   <th style="padding:8px; text-align:right;">Customers</th>
                   <th style="padding:8px; text-align:right;">% of Total</th>
                 </tr>
                 ${data.map(segment => {
                   const customers = parseInt(segment.total_customers || 0);
                   const total = data.reduce((sum, s) => sum + parseInt(s.total_customers || 0), 0);
-                  const percentage = ((customers / total) * 100).toFixed(1);
+                  const percentage = total > 0 ? ((customers / total) * 100).toFixed(1) : '0.0';
                   return `
                     <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
-                      <td style="padding:8px; text-transform:capitalize;">${segment.risk_segment.replace('_', ' ')}</td>
+                      <td style="padding:8px; text-transform:capitalize;">${String(segment.label).replace(/_/g, ' ')}</td>
                       <td style="padding:8px; text-align:right; font-weight:600;">${customers.toLocaleString()}</td>
                       <td style="padding:8px; text-align:right; color:#48dbfb;">${percentage}%</td>
                     </tr>
@@ -1779,7 +1804,7 @@ Would you like to download a PDF report of these results?`;
             <div style="max-height:400px; overflow-y:auto;">
               <table style="width:100%; border-collapse:collapse; font-size:12px;">
                 <tr style="background:rgba(72,219,251,0.2); border-bottom:1px solid rgba(255,255,255,0.3);">
-                  <th style="padding:8px; text-align:left;">Risk Segment</th>
+                  <th style="padding:8px; text-align:left;">Segment</th>
                   <th style="padding:8px; text-align:right;">Total Exposure</th>
                   <th style="padding:8px; text-align:right;">Per Customer</th>
                   <th style="padding:8px; text-align:right;">% of Total</th>
@@ -1792,7 +1817,7 @@ Would you like to download a PDF report of these results?`;
                   const percentage = total > 0 ? ((exposure / total) * 100).toFixed(1) : '0.0';
                   return `
                     <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
-                      <td style="padding:8px; text-transform:capitalize;">${segment.risk_segment.replace('_', ' ')}</td>
+                      <td style="padding:8px; text-transform:capitalize;">${String(segment.label).replace(/_/g, ' ')}</td>
                       <td style="padding:8px; text-align:right; font-weight:600;">${fmtMoney(exposure)}</td>
                       <td style="padding:8px; text-align:right;">${fmtMoney(perCustomer)}</td>
                       <td style="padding:8px; text-align:right; color:#48dbfb;">${percentage}%</td>
@@ -1813,7 +1838,7 @@ Would you like to download a PDF report of these results?`;
             <div style="max-height:400px; overflow-y:auto;">
               <table style="width:100%; border-collapse:collapse; font-size:12px;">
                 <tr style="background:rgba(72,219,251,0.2); border-bottom:1px solid rgba(255,255,255,0.3);">
-                  <th style="padding:8px; text-align:left;">Risk Segment</th>
+                  <th style="padding:8px; text-align:left;">Segment</th>
                   <th style="padding:8px; text-align:right;">Avg Risk Score</th>
                   <th style="padding:8px; text-align:right;">Customers</th>
                   <th style="padding:8px; text-align:right;">Weight</th>
@@ -1825,7 +1850,7 @@ Would you like to download a PDF report of these results?`;
                   const weight = totalCustomers > 0 ? ((customers / totalCustomers) * 100).toFixed(1) : '0.0';
                   return `
                     <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
-                      <td style="padding:8px; text-transform:capitalize;">${segment.risk_segment.replace('_', ' ')}</td>
+                      <td style="padding:8px; text-transform:capitalize;">${String(segment.label).replace(/_/g, ' ')}</td>
                       <td style="padding:8px; text-align:right; font-weight:600; color:${avgRisk >= 80 ? '#F44336' : avgRisk >= 60 ? '#FF9800' : '#4CAF50'};">${formatNumber(avgRisk)}</td>
                       <td style="padding:8px; text-align:right;">${customers}</td>
                       <td style="padding:8px; text-align:right; color:#48dbfb;">${weight}%</td>
@@ -1834,7 +1859,7 @@ Would you like to download a PDF report of these results?`;
                 }).join('')}
               </table>
               <div style="margin-top:12px; padding:8px; background:rgba(255,255,255,0.05); border-radius:4px; font-size:11px;">
-                <strong>Portfolio Average: ${formatNumber(data.reduce((sum, s) => sum + parseFloat(s.avg_risk_score || 0) * parseInt(s.total_customers || 0), 0) / data.reduce((sum, s) => sum + parseInt(s.total_customers || 0), 0))}</strong>
+                <strong>Portfolio Average: ${formatNumber(data.reduce((sum, s) => sum + parseFloat(s.avg_risk_score || 0) * parseInt(s.total_customers || 0), 0) / Math.max(1, data.reduce((sum, s) => sum + parseInt(s.total_customers || 0), 0)))} </strong>
               </div>
             </div>
           `;
@@ -1855,7 +1880,7 @@ Would you like to download a PDF report of these results?`;
                 ${data.map((segment, index) => {
                   return `
                     <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
-                      <td style="padding:6px; text-transform:capitalize; font-weight:600;">${index + 1}. ${segment.risk_segment.replace('_', ' ')}</td>
+                      <td style="padding:6px; text-transform:capitalize; font-weight:600;">${index + 1}. ${String(segment.label).replace(/_/g, ' ')}</td>
                       <td style="padding:6px; text-align:right;">${parseInt(segment.total_customers || 0)}</td>
                       <td style="padding:6px; text-align:right; color:${parseFloat(segment.avg_risk_score || 0) >= 80 ? '#F44336' : parseFloat(segment.avg_risk_score || 0) >= 60 ? '#FF9800' : '#4CAF50'};">${parseFloat(segment.avg_risk_score || 0).toFixed(1)}</td>
                       <td style="padding:6px; text-align:right;">${fmtMoney(parseFloat(segment.total_exposure || 0))}</td>
@@ -1874,7 +1899,7 @@ Would you like to download a PDF report of these results?`;
             <div style="max-height:400px; overflow-y:auto;">
               <table style="width:100%; border-collapse:collapse; font-size:12px;">
                 <tr style="background:rgba(72,219,251,0.2); border-bottom:1px solid rgba(255,255,255,0.3);">
-                  <th style="padding:8px; text-align:left;">Risk Segment</th>
+                  <th style="padding:8px; text-align:left;">Segment</th>
                   <th style="padding:8px; text-align:right;">Total Scenarios</th>
                   <th style="padding:8px; text-align:right;">Per Customer</th>
                   <th style="padding:8px; text-align:right;">Adoption Rate</th>
@@ -1883,13 +1908,13 @@ Would you like to download a PDF report of these results?`;
                   const scenarios = parseInt(segment.scenarios_applied || 0);
                   const customers = parseInt(segment.total_customers || 0);
                   const perCustomer = customers > 0 ? (scenarios / customers).toFixed(1) : '0.0';
-                  const adoptionRate = parseFloat(segment.scenario_adoption_rate || 0) * 100;
+                  const adoptionRate = (parseFloat(segment.scenario_adoption_rate || 0) * (parseFloat(segment.scenario_adoption_rate || 0) <= 1 ? 100 : 1));
                   return `
                     <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
-                      <td style="padding:8px; text-transform:capitalize;">${segment.risk_segment.replace('_', ' ')}</td>
+                      <td style="padding:8px; text-transform:capitalize;">${String(segment.label).replace(/_/g, ' ')}</td>
                       <td style="padding:8px; text-align:right; font-weight:600;">${scenarios}</td>
                       <td style="padding:8px; text-align:right;">${perCustomer}</td>
-                      <td style="padding:8px; text-align:right; color:#48dbfb;">${adoptionRate.toFixed(1)}%</td>
+                      <td style="padding:8px; text-align:right; color:#48dbfb;">${Number.isFinite(adoptionRate) ? adoptionRate.toFixed(1) : '0.0'}%</td>
                     </tr>
                   `;
                 }).join('')}
@@ -1907,19 +1932,19 @@ Would you like to download a PDF report of these results?`;
             <div style="max-height:400px; overflow-y:auto;">
               <table style="width:100%; border-collapse:collapse; font-size:12px;">
                 <tr style="background:rgba(72,219,251,0.2); border-bottom:1px solid rgba(255,255,255,0.3);">
-                  <th style="padding:8px; text-align:left;">Risk Segment</th>
+                  <th style="padding:8px; text-align:left;">Segment</th>
                   <th style="padding:8px; text-align:right;">Adoption Rate</th>
                   <th style="padding:8px; text-align:right;">Active Customers</th>
                   <th style="padding:8px; text-align:right;">Total Customers</th>
                 </tr>
                 ${data.map(segment => {
-                  const adoptionRate = parseFloat(segment.scenario_adoption_rate || 0) * 100;
+                  const adoptionRate = (parseFloat(segment.scenario_adoption_rate || 0) * (parseFloat(segment.scenario_adoption_rate || 0) <= 1 ? 100 : 1));
                   const totalCustomers = parseInt(segment.total_customers || 0);
-                  const activeCustomers = Math.round(totalCustomers * parseFloat(segment.scenario_adoption_rate || 0));
+                  const activeCustomers = Math.round(totalCustomers * (parseFloat(segment.scenario_adoption_rate || 0) <= 1 ? parseFloat(segment.scenario_adoption_rate || 0) : parseFloat(segment.scenario_adoption_rate || 0) / 100));
                   return `
                     <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
-                      <td style="padding:8px; text-transform:capitalize;">${segment.risk_segment.replace('_', ' ')}</td>
-                      <td style="padding:8px; text-align:right; font-weight:600; color:${adoptionRate >= 50 ? '#4CAF50' : adoptionRate >= 25 ? '#FF9800' : '#F44336'};">${adoptionRate.toFixed(1)}%</td>
+                      <td style="padding:8px; text-transform:capitalize;">${String(segment.label).replace(/_/g, ' ')}</td>
+                      <td style="padding:8px; text-align:right; font-weight:600; color:${adoptionRate >= 50 ? '#4CAF50' : adoptionRate >= 25 ? '#FF9800' : '#F44336'};">${Number.isFinite(adoptionRate) ? adoptionRate.toFixed(1) : '0.0'}%</td>
                       <td style="padding:8px; text-align:right;">${activeCustomers}</td>
                       <td style="padding:8px; text-align:right; color:#48dbfb;">${totalCustomers}</td>
                     </tr>
@@ -1927,7 +1952,7 @@ Would you like to download a PDF report of these results?`;
                 }).join('')}
               </table>
               <div style="margin-top:12px; padding:8px; background:rgba(255,255,255,0.05); border-radius:4px; font-size:11px;">
-                <strong>Portfolio Average: ${(data.reduce((sum, s) => sum + parseFloat(s.scenario_adoption_rate || 0) * parseInt(s.total_customers || 0), 0) / data.reduce((sum, s) => sum + parseInt(s.total_customers || 0), 0) * 100).toFixed(1)}%</strong>
+                <strong>Portfolio Average: ${(data.reduce((sum, s) => sum + (parseFloat(s.scenario_adoption_rate || 0) <= 1 ? parseFloat(s.scenario_adoption_rate || 0) : parseFloat(s.scenario_adoption_rate || 0) / 100) * parseInt(s.total_customers || 0), 0) / Math.max(1, data.reduce((sum, s) => sum + parseInt(s.total_customers || 0), 0)) * 100).toFixed(1)}%</strong>
               </div>
             </div>
           `;
