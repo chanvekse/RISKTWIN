@@ -967,7 +967,9 @@ app.get('/api/cohort/:analysisType', async (req, res) => {
  */
   app.get('/api/cohort/segments/:analysisType', async (req, res) => {
     try {
-      const analysisType = req.params.analysisType || 'risk_based';
+      // Normalise analysis type to handle both snake_case and kebab-case (e.g. policy_vintage vs policy-vintage)
+      let analysisTypeRaw = req.params.analysisType || 'risk_based';
+      const analysisType = analysisTypeRaw.replace(/-/g, '_');
       const timeFrame = req.query.timeFrame || '90d';
 
       // Immediate stable response for geographic segments (bypass DB)
@@ -992,7 +994,7 @@ app.get('/api/cohort/:analysisType', async (req, res) => {
       }
       
       // Get the full cohort analysis data which includes segments
-      const cohortData = await cohortService.generateCohortAnalysis(analysisType, timeFrame);
+      const cohortData = await cohortService.generateCohortAnalysis(analysisTypeRaw, timeFrame);
       
       // Return the segments data in the format expected by the frontend
       return res.json({
