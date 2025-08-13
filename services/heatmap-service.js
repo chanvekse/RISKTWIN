@@ -296,6 +296,7 @@ class HeatMapService {
             state_name: coords.name,
             scenario_count: parseInt(activity.scenario_count),
             active_customers: parseInt(activity.active_customers),
+            total_customers: parseInt(activity.active_customers), // alias for UI compatibility
             avg_risk_score: parseFloat(activity.avg_risk_score),
             activity_level: this.getActivityLevel(parseInt(activity.scenario_count))
           };
