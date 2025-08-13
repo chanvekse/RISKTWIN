@@ -8,8 +8,12 @@
     :root { --bg:#0b1020; --card:#121a33; --text:#e7ecff; --muted:#9fb1ff; --accent:#6aa3ff; --good:#19c37d; --bad:#ff6b6b; }
     *{ box-sizing:border-box; font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial }
     body{ margin:0; background:linear-gradient(180deg,#0a0f1f,#0b1020); color:var(--text) }
-    header{ padding:20px 24px; border-bottom:1px solid #1f2a4d; display:flex; gap:12px; align-items:center }
-    header h1{ font-size:20px; margin:0 }
+    header{ padding:32px 40px; background:linear-gradient(90deg,#0d1b3a,#10244e); border-bottom:none; box-shadow:0 4px 14px rgba(0,0,0,0.6); display:flex; align-items:center; gap:32px; flex-wrap:wrap }
+    .brand{ display:flex; flex-direction:column; gap:4px; }
+    .brand h1{ font-size:30px; margin:0; line-height:1.2; }
+    .tagline{ font-size:14px; color:#d0dcff; max-width:800px; }
+    header .pill{ margin-left:auto; background:rgba(255,255,255,0.15); backdrop-filter:blur(4px); }
+    @media (max-width:600px){ header{ padding:20px; flex-direction:column; align-items:flex-start; } header .pill{ margin-left:0; } .brand h1{ font-size:24px; } }
     .wrap{ display:grid; grid-template-columns: 380px 1fr; gap:16px; padding:16px }
     .card{ background:var(--card); border:1px solid #1f2a4d; border-radius:14px; padding:14px; box-shadow:0 6px 24px rgba(0,0,0,.25) }
     .title{ font-weight:700; color:var(--muted); margin:0 0 10px }
@@ -280,8 +284,10 @@
 </head>
 <body>
   <header>
-    <h1>🛡️ RiskTwin – AI-Powered Insurance Risk Analytics</h1>
-    <p style="margin:4px 0 0;font-size:0.9rem;color:#9fb1ff;max-width:600px;">Create a live digital twin for every policyholder, run what-if scenarios, and visualize portfolio risk in real time.</p>
+    <div class="brand">
+      <h1><span style="filter:drop-shadow(0 0 6px rgba(106,163,255,0.6));">🛡️</span> RiskTwin</h1>
+      <div class="tagline">Create a live digital twin for every policyholder, run what-if scenarios &amp; visualize portfolio risk in real-time.</div>
+    </div>
     <span class="pill">Demo</span>
   </header>
 
