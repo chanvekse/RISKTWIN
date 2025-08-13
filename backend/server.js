@@ -490,12 +490,21 @@ async function applyScenarioImpact(customerId, changeJson) {
       WHERE customer_id = $4
     `, [newRiskScore, newClaimProb, newExpectedLoss, customerId]);
     
+    const impactSummary = {
+      beforeRiskScore: customer.base_risk_score,
+      afterRiskScore: parseFloat(newRiskScore.toFixed(1)),
+      beforeDeductible: changeJson.before_deductible,
+      afterDeductible: changeJson.final_deductible
+    };
+
     console.log(`Scenario impact applied for customer ${customerId}:`, {
-      riskScore: `${customer.base_risk_score} → ${newRiskScore.toFixed(1)}`,
+      riskScore: `${impactSummary.beforeRiskScore} → ${impactSummary.afterRiskScore}`,
       claimProb: `${(customer.next12m_claim_prob * 100).toFixed(1)}% → ${(newClaimProb * 100).toFixed(1)}%`,
       expectedLoss: `$${customer.next12m_expected_loss} → $${newExpectedLoss.toFixed(0)}`
     });
-    
+
+    return impactSummary;
+
   } catch (error) {
     console.error('Error applying scenario impact:', error);
     throw error;
@@ -525,8 +534,10 @@ app.post('/api/scenario',
       const scenario = scenarioResult.rows[0];
       
       // Apply scenario changes to customer risk profile
+
+      let impact = null;
       if (!change_json.no_change) {
-        await applyScenarioImpact(customer_id, change_json);
+        impact = await applyScenarioImpact(customer_id, change_json);
       }
       
       // Generate business-focused timeline entry
@@ -539,6 +550,14 @@ app.post('/api/scenario',
       if (change_json.increase_deductible) {
         timelineDetails += `, increased deductible by $${change_json.increase_deductible}`;
         timelineTitle = `💰 Deductible Adjustment - Est. Premium Impact: -$${Math.round(change_json.increase_deductible * 0.15)}/year`;
+      }
+
+      // Append before/after metrics for storyboard display
+      if (impact) {
+        timelineDetails += ` | Risk: ${impact.beforeRiskScore.toFixed(1)}→${impact.afterRiskScore.toFixed(1)}`;
+        if (impact.beforeDeductible !== undefined && impact.afterDeductible !== undefined) {
+          timelineDetails += ` | Deductible: $${impact.beforeDeductible}→$${impact.afterDeductible}`;
+        }
       }
       
       // Create timeline event

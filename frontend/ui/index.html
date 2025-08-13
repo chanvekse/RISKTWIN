@@ -571,6 +571,21 @@
     const fmtMoney = n => (n==null ? '–' : '$' + Number(n).toLocaleString());
     const fmtPct = n => (n==null ? '–' : (Number(n)*100).toFixed(1) + '%');
 
+    /**
+     * Safely parse a timestamp coming from the API.
+     * If the string lacks a timezone component we assume it is UTC
+     * and append a trailing "Z" so the Date constructor interprets it correctly.
+     */
+    function parseUtcTimestamp(ts){
+      if(!ts) return new Date();
+      const hasTZ = /Z$|[+-]\d{2}:?\d{2}$/.test(ts);
+      return new Date(hasTZ ? ts : ts + 'Z');
+    }
+
+    // Format helpers for Storyboard so everything shows in Central time
+    const formatDateCST = d => d.toLocaleDateString('en-US',{timeZone:'America/Chicago'});
+    const formatTimeCST = d => d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',timeZone:'America/Chicago'});
+
     let currentId = null;
     let currentTwin = null;
     let isAnimating = false;
@@ -761,9 +776,9 @@
       timelineArray.forEach(ev => {
         const row = document.createElement('div');
         row.className = 'titem';
-        const eventDate = new Date(ev.event_ts);
-        const dateStr = eventDate.toLocaleDateString();
-        const timeStr = eventDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second: '2-digit'});
+        const eventDate = parseUtcTimestamp(ev.event_ts);
+        const dateStr = formatDateCST(eventDate);
+        const timeStr = formatTimeCST(eventDate);
         const relativeTime = getRelativeTime(eventDate);
         
         // Enhanced display for scenario events
@@ -2553,9 +2568,9 @@ Would you like to download a PDF report of these results?`;
             timeline.forEach(ev => {
               const row = document.createElement('div');
               row.className = 'titem';
-              const eventDate = new Date(ev.event_ts);
-              const dateStr = eventDate.toLocaleDateString();
-              const timeStr = eventDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second: '2-digit'});
+              const eventDate = parseUtcTimestamp(ev.event_ts);
+              const dateStr = formatDateCST(eventDate);
+              const timeStr = formatTimeCST(eventDate);
               const relativeTime = getRelativeTime(eventDate);
               
               const isScenario = ev.tag === 'scenario';
