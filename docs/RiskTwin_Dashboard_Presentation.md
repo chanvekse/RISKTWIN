@@ -111,6 +111,35 @@
 
 ---
 
+## Slide 6: 🎯 **Customer Cohort Segmentation & Drill-Downs**  *(NEW FEATURE)*
+### 360-Degree Portfolio Intelligence at a Glance
+
+**🧩 Four Cohort Analysis Types**
+1. **Risk-Based** – Ultra-Low, Low, Moderate, High, Severe risk tiers  
+2. **Geographic** – West Coast, South, Mountain West, Great Lakes, Northeast  
+3. **Claim Behavior** – Claim-Free, Single Claim, Multiple Claims  
+4. **Policy Vintage** – New (<1 yr), Established (1-3 yr), Mature (3-7 yr), Legacy (7 yr+)
+
+**🏷️ Card Metrics**
+• *Customers* • *Average Risk* • *Total Exposure* • *Scenarios* • *Adoption Rate*
+
+**🔎 One-Click Drill-Down**
+• Click any cohort card → fetches `/api/cohort/segments/{analysisType}`  
+• Modal shows detailed metrics & migration analysis for the selected segment  
+• Fallback JSON ensures **zero downtime** even if the database is unreachable
+
+**📈 Business Impact**
+• Identify migration trends, scenario uptake, and hidden exposures  
+• Enables targeted underwriting, retention, and pricing strategies  
+• Powers geographic expansion & claims-prevention initiatives
+
+**💻 Technical Highlights**
+• Instant hard-coded fallback data for demo stability  
+• Robust label mapping prevents “undefined” or “Unknown Region” issues  
+• Cache-busting & CORS headers for always-fresh analytics
+
+---
+
 ## Slide 6: Customer Storyboard Timeline
 ### Complete Risk Journey Visualization
 
