@@ -628,7 +628,7 @@
         const currentValue = startValue + (endValue - startValue) * easeOut;
         
         if (element.id === 'd_risk') {
-          element.textContent = currentValue.toFixed(1);
+          element.textContent = formatNumber(currentValue);
           // Add visual feedback for risk changes
           if (endValue > startValue) {
             element.style.color = '#ff4444'; // Red for increased risk
@@ -668,7 +668,7 @@
           <td>${r.customer_id}</td>
           <td>${r.name}</td>
           <td>${r.state}</td>
-          <td>${Number(r.base_risk_score).toFixed(1)}</td>
+          <td>${formatNumber(r.base_risk_score)}</td>
           <td>${fmtPct(r.next12m_claim_prob)}</td>
           <td>${fmtMoney(r.next12m_expected_loss)}</td>`;
         tr.onclick = () => loadTwin(r.customer_id);
@@ -707,7 +707,7 @@
         animateValue(el('#d_loss'), prevTwin.next12m_expected_loss, newTwin.next12m_expected_loss);
       } else {
         // Set values immediately for initial load
-        el('#d_risk').textContent = newTwin?.base_risk_score?.toFixed(1) ?? '–';
+        el('#d_risk').textContent = newTwin?.base_risk_score != null ? formatNumber(newTwin.base_risk_score) : '–';
         el('#d_prob').textContent = fmtPct(newTwin?.next12m_claim_prob);
         el('#d_loss').textContent = fmtMoney(newTwin?.next12m_expected_loss);
       }
@@ -1284,8 +1284,8 @@ Would you like to download a PDF report of these results?`;
         const alerts = await alertsRes.json();
 
         // Update overview metrics
-        el('#portfolio-total-customers').textContent = summary.overview.total_customers;
-        el('#portfolio-avg-risk').textContent = summary.overview.avg_risk_score;
+        el('#portfolio-total-customers').textContent = formatNumber(summary.overview.total_customers,0);
+        el('#portfolio-avg-risk').textContent = formatNumber(summary.overview.avg_risk_score);
         el('#portfolio-total-exposure').textContent = fmtMoney(summary.overview.total_expected_loss);
         el('#portfolio-risk-spread').textContent = summary.overview.risk_spread;
 
@@ -1307,7 +1307,7 @@ Would you like to download a PDF report of these results?`;
             <tr>
               <td style="padding:8px; font-weight:600;">${geo.state}</td>
               <td style="padding:8px; text-align:center;">${geo.customer_count}</td>
-              <td style="padding:8px; text-align:center; color:${riskColor}; font-weight:600;">${geo.avg_risk_score}</td>
+              <td style="padding:8px; text-align:center; color:${riskColor}; font-weight:600;">${formatNumber(geo.avg_risk_score)}</td>
               <td style="padding:8px; text-align:center;">${fmtMoney(geo.total_exposure)}</td>
               <td style="padding:8px; text-align:center;">
                 <span style="background:${riskColor}; padding:2px 6px; border-radius:4px; font-size:10px; color:#000; font-weight:600;">
@@ -2168,7 +2168,7 @@ Would you like to download a PDF report of these results?`;
         let detailText = `👥 ${getSegmentLabel(segment, analysisType)} Details\n\n`;
         detailText += `📊 Segment Overview:\n`;
         detailText += `• Customer Count: ${segment.customer_count}\n`;
-        detailText += `• Average Risk Score: ${parseFloat(segment.avg_risk_score || 0).toFixed(1)}\n`;
+        detailText += `• Average Risk Score: ${formatNumber(segment.avg_risk_score || 0)}\n`;
         detailText += `• Total Exposure: ${fmtMoney(segment.total_exposure || 0)}\n`;
         detailText += `• Scenarios Applied: ${segment.scenarios_applied || 0}\n`;
         
