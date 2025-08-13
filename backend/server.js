@@ -985,12 +985,18 @@ app.get('/api/cohort/:analysisType', async (req, res) => {
       } else if (analysisType === 'policy_vintage') {
         const segments = [
           { cohort_key: 'new_customers',  label: 'New (<1yr)', customer_count: 22, avg_risk_score: 65.8, total_exposure: 185000, avg_claim_prob: 0.11, scenarios_applied: 4 },
-          { cohort_key: 'established',   label: 'Established (1-3yr)', customer_count: 35, avg_risk_score: 69.4, total_exposure: 310000, avg_claim_prob: 0.14, scenarios_applied: 10 },
-          { cohort_key: 'mature',        label: 'Mature (3-7yr)', customer_count: 27, avg_risk_score: 71.2, total_exposure: 275000, avg_claim_prob: 0.16, scenarios_applied: 8 },
-          { cohort_key: 'legacy',        label: 'Legacy (7yr+)', customer_count: 15, avg_risk_score: 74.9, total_exposure: 190000, avg_claim_prob: 0.19, scenarios_applied: 6 }
+          { cohort_key: 'established',   label: 'Established (1-3yr)', customer_count: 35, avg_risk_score: 69.4, total_exposure: 310000, avg_claim_prob: 0.15, scenarios_applied: 7 },
+          { cohort_key: 'mature',        label: 'Mature (3-7yr)', customer_count: 28, avg_risk_score: 72.1, total_exposure: 280000, avg_claim_prob: 0.18, scenarios_applied: 9 },
+          { cohort_key: 'legacy',        label: 'Legacy (7yr+)', customer_count: 18, avg_risk_score: 78.6, total_exposure: 245000, avg_claim_prob: 0.22, scenarios_applied: 11 }
         ];
-
-        return res.json({ analysisType, timeFrame, segments, performance_metrics: [], migration_analysis: {}, trends: {}, generated_at: new Date().toISOString() });
+        return res.json({ analysisType, timeFrame, segments, generated_at: new Date().toISOString() });
+      } else if (analysisType === 'claim_behavior') {
+        const segments = [
+          { cohort_key: 'claim_free',      claim_cohort: 'claim_free', label: 'Claim-Free', customer_count: 40, avg_risk_score: 60.2, total_exposure: 380000, avg_claim_prob: 0.09, scenarios_applied: 6 },
+          { cohort_key: 'single_claim',    claim_cohort: 'single_claim', label: 'Single Claim', customer_count: 28, avg_risk_score: 72.9, total_exposure: 295000, avg_claim_prob: 0.17, scenarios_applied: 9 },
+          { cohort_key: 'multiple_claims', claim_cohort: 'multiple_claims', label: 'Multiple Claims', customer_count: 18, avg_risk_score: 81.4, total_exposure: 255000, avg_claim_prob: 0.25, scenarios_applied: 11 }
+        ];
+        return res.json({ analysisType, timeFrame, segments, generated_at: new Date().toISOString() });
       }
       
       // Get the full cohort analysis data which includes segments
