@@ -293,6 +293,17 @@
     /* Generic helper class for any future clickable label */
     .clickable-label{ cursor:pointer; }
     .clickable-label:hover{ text-decoration:underline; }
+
+    /* --- Universal Button Interaction Styles --- */
+    button {
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      filter: brightness(1.1);
+    }
   </style>
 </head>
 <body>
