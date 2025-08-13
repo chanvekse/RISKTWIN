@@ -2076,7 +2076,7 @@ Would you like to download a PDF report of these results?`;
       if (analysisType === 'risk_based') return segment.risk_cohort;
       if (analysisType === 'geographic') return segment.cohort_key || segment.state || segment.region_name;
       if (analysisType === 'policy_vintage') return segment.vintage_cohort || segment.cohort_key;
-      if (analysisType === 'claim_behavior') return segment.claim_cohort;
+      if (analysisType === 'claim_behavior') return segment.claim_cohort || segment.cohort_key;
       return 'unknown';
     }
 

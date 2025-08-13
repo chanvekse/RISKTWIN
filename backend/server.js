@@ -848,9 +848,9 @@ app.get('/api/cohort/analysis', async (req, res) => {
     } else if (analysisType === 'claim_behavior') {
       // Quick fallback data for claim-behaviour analysis so panels render even when DB is slow
       const segments = [
-        { cohort_key: 'claim_free',       label: 'Claim-Free',       customer_count: 40, avg_risk_score: 60.2, total_exposure: 380000, avg_claim_prob: 0.05, scenarios_applied: 6 },
-        { cohort_key: 'single_claim',     label: 'Single Claim',    customer_count: 28, avg_risk_score: 72.9, total_exposure: 295000, avg_claim_prob: 0.12, scenarios_applied: 9 },
-        { cohort_key: 'multiple_claims',  label: 'Multiple Claims', customer_count: 18, avg_risk_score: 81.4, total_exposure: 255000, avg_claim_prob: 0.22, scenarios_applied: 11 }
+        { cohort_key: 'claim_free',       claim_cohort: 'claim_free',       label: 'Claim-Free',       customer_count: 40, avg_risk_score: 60.2, total_exposure: 380000, avg_claim_prob: 0.05, scenarios_applied: 6 },
+        { cohort_key: 'single_claim',     claim_cohort: 'single_claim',     label: 'Single Claim',    customer_count: 28, avg_risk_score: 72.9, total_exposure: 295000, avg_claim_prob: 0.12, scenarios_applied: 9 },
+        { cohort_key: 'multiple_claims',  claim_cohort: 'multiple_claims',  label: 'Multiple Claims', customer_count: 18, avg_risk_score: 81.4, total_exposure: 255000, avg_claim_prob: 0.22, scenarios_applied: 11 }
       ];
 
       const performanceMetrics = segments.map(seg => ({
