@@ -542,23 +542,36 @@ app.post('/api/scenario',
       
       // Generate business-focused timeline entry
       let timelineTitle = '📅 What-if Scenario Applied';
-      let timelineDetails = `Applied scenario: ${name}`;
-      
+
+      // Build a concise, non-duplicative details string
+      let timelineParts = [];
+
       if (change_json.move_state) {
-        timelineDetails += `, relocated to ${change_json.move_state}`;
+        timelineParts.push(`Relocated to ${change_json.move_state}`);
       }
+
+      // Handle deductible modifications with explicit before / after amounts
       if (change_json.increase_deductible) {
-        timelineDetails += `, increased deductible by $${change_json.increase_deductible}`;
         timelineTitle = `💰 Deductible Adjustment - Est. Premium Impact: -$${Math.round(change_json.increase_deductible * 0.15)}/year`;
+        timelineParts.push(`Increased deductible by $${change_json.increase_deductible}`);
+      } else if (change_json.decrease_deductible) {
+        timelineTitle = `💰 Deductible Adjustment +$${Math.round(change_json.decrease_deductible * 0.15)}/year est.`;
+        timelineParts.push(`Decreased deductible by $${change_json.decrease_deductible}`);
+      } else {
+        // Default description falls back to scenario name (when not purely deductible change)
+        timelineParts.push(`Applied scenario: ${name}`);
       }
 
       // Append before/after metrics for storyboard display
       if (impact) {
-        timelineDetails += ` | Risk: ${impact.beforeRiskScore.toFixed(1)}→${impact.afterRiskScore.toFixed(1)}`;
+        timelineParts.push(`Risk: ${impact.beforeRiskScore.toFixed(1)}→${impact.afterRiskScore.toFixed(1)}`);
         if (impact.beforeDeductible !== undefined && impact.afterDeductible !== undefined) {
-          timelineDetails += ` | Deductible: $${impact.beforeDeductible}→$${impact.afterDeductible}`;
+          timelineParts.push(`Prev deductible: $${impact.beforeDeductible}`);
+          timelineParts.push(`Current deductible: $${impact.afterDeductible}`);
         }
       }
+
+      const timelineDetails = timelineParts.join(' | ');
       
       // Create timeline event
       const timelineQuery = `
